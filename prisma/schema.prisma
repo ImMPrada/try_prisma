@@ -1,11 +1,2726 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model account_approval_steps {
+  id          BigInt   @id @default(autoincrement())
+  step_number Int
+  role        String   @db.VarChar(255)
+  group_id    Int
+  created_at  DateTime @db.DateTime(6)
+  updated_at  DateTime @db.DateTime(6)
+  groups      groups   @relation(fields: [group_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_88ee57d397")
+
+  @@unique([step_number, role, group_id], map: "index_account_approval_steps_role_group")
+  @@index([group_id], map: "index_account_approval_steps_on_group_id")
+}
+
+model account_approvals {
+  id          BigInt    @id @default(autoincrement())
+  account_id  Int
+  approver_id Int?
+  previous_id BigInt?
+  role        String?   @db.VarChar(255)
+  status_id   Int?
+  finished_at DateTime? @db.DateTime(0)
+  note        String?   @db.Text
+  created_at  DateTime  @db.DateTime(0)
+  updated_at  DateTime  @db.DateTime(0)
+  accounts    accounts  @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_30105757d2")
+  users       users?    @relation(fields: [approver_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_dfa181d059")
+
+  @@index([account_id], map: "index_account_approvals_on_account_id")
+  @@index([approver_id], map: "index_account_approvals_on_approver_id")
+  @@index([previous_id], map: "index_account_approvals_on_previous_id")
+}
+
+model account_flow_joint_applicants {
+  id                                 Int      @id @default(autoincrement())
+  advisor_create_new_account_flow_id Int
+  email                              String   @db.VarChar(255)
+  created_at                         DateTime @db.DateTime(0)
+  updated_at                         DateTime @db.DateTime(0)
+}
+
+model account_goals {
+  id                 Int               @id @default(autoincrement())
+  weight             Float?            @db.Float
+  account_id         Int
+  goal_id            Int
+  model_portfolio_id Int?
+  created_at         DateTime          @db.DateTime(0)
+  updated_at         DateTime          @db.DateTime(0)
+  accounts           accounts          @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_6e723f7853")
+  goals              goals             @relation(fields: [goal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_c70ca246a1")
+  model_portfolios   model_portfolios? @relation(fields: [model_portfolio_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_cc44513dfd")
+
+  @@unique([account_id, goal_id], map: "index_account_goals_on_account_id_and_goal_id")
+  @@index([account_id], map: "index_account_goals_on_account_id")
+  @@index([goal_id], map: "index_account_goals_on_goal_id")
+  @@index([model_portfolio_id], map: "index_account_goals_on_model_portfolio_id")
+}
+
+model account_lifecycles_read_models {
+  id             Int       @id @default(autoincrement())
+  account_id     Int?
+  client_name    String?   @db.VarChar(255)
+  account_number String?   @db.VarChar(255)
+  status_id      Int?
+  type_id        Int?
+  started_at     DateTime? @db.DateTime(0)
+  completed_at   DateTime? @db.DateTime(0)
+  opened_at      DateTime? @db.DateTime(0)
+  funded_at      DateTime? @db.DateTime(0)
+  funded1000_at  DateTime? @db.DateTime(0)
+  balance        Decimal?  @db.Decimal(17, 2)
+  created_at     DateTime  @db.DateTime(0)
+  updated_at     DateTime  @db.DateTime(0)
+
+  @@index([account_id], map: "index_account_lifecycles_read_models_on_account_id")
+}
+
+model account_number_assignments {
+  id             Int       @id @default(autoincrement())
+  account_id     Int
+  custodian_id   Int
+  effective_date DateTime? @db.Date
+  account_number String    @db.VarChar(255)
+  created_at     DateTime  @db.DateTime(0)
+  updated_at     DateTime  @db.DateTime(0)
+
+  @@index([account_id], map: "index_account_number_assignments_on_account_id")
+  @@index([custodian_id], map: "index_account_number_assignments_on_custodian_id")
+}
+
+model account_portfolio_histories {
+  id                  BigInt   @id @default(autoincrement())
+  account_id          Int
+  risk_level          Int
+  portfolio_option_id Int
+  created_at          DateTime @db.DateTime(6)
+  updated_at          DateTime @db.DateTime(6)
+  accounts            accounts @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_71ce12fec7")
+
+  @@index([account_id], map: "fk_rails_71ce12fec7")
+  @@index([portfolio_option_id], map: "index_account_portfolio_histories_on_portfolio_option_id")
+  @@index([risk_level], map: "index_account_portfolio_histories_on_risk_level")
+}
+
+model account_read_models {
+  id                      Int       @id @default(autoincrement())
+  account_id              Int?
+  user_id                 Int?
+  started_at              DateTime? @db.DateTime(0)
+  email                   String?   @db.VarChar(255)
+  client_name             String?   @db.VarChar(255)
+  account_number          String?   @db.VarChar(255)
+  status_id               Int?
+  type_id                 Int?
+  responsible             Boolean?
+  application_completed   Boolean?
+  balance                 Decimal?  @db.Decimal(17, 2)
+  timeframe               Int?
+  risk_level              Int?
+  max_drift               Decimal?  @db.Decimal(5, 2)
+  has_promotions          Boolean?
+  client_stat_terms       String?   @db.VarChar(255)
+  rejection_reason        String?   @db.Text
+  last_kyc                DateTime? @db.DateTime(0)
+  can_delete              Boolean?
+  search_terms            String?   @db.VarChar(255)
+  primary_advisor_name    String?   @db.VarChar(255)
+  skip_rebalancing        Boolean   @default(false)
+  balance_30_days_ago     Decimal?  @db.Decimal(17, 2)
+  primary_advisor_user_id Int?
+  custodian_id            Int?
+  portfolio_option_id     Int?
+
+  @@index([account_number], map: "account_read_models_account_number")
+  @@index([search_terms], map: "account_read_models_fulltext_index")
+  @@index([account_id], map: "index_account_read_models_on_account_id")
+}
+
+model account_transfer_securities {
+  id                  Int                @id @default(autoincrement())
+  account_transfer_id Int?
+  description         String?            @db.VarChar(255)
+  quantity            Decimal?           @db.Decimal(17, 4)
+  created_at          DateTime           @db.DateTime(0)
+  updated_at          DateTime           @db.DateTime(0)
+  account_transfers   account_transfers? @relation(fields: [account_transfer_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_013d6ed05f")
+
+  @@index([account_transfer_id], map: "index_account_transfer_securities_on_account_transfer_id")
+}
+
+model account_transfers {
+  id                                  Int                                @id @default(autoincrement())
+  external_account_number             String?                            @db.VarChar(255)
+  institution_name                    String?                            @db.VarChar(255)
+  account_id                          Int?
+  dsc_id                              Int?
+  in_kind                             Boolean?
+  partial_transfer                    Boolean?
+  status_id                           Int?
+  cancelled_at                        DateTime?                          @db.DateTime(0)
+  created_at                          DateTime                           @db.DateTime(0)
+  updated_at                          DateTime                           @db.DateTime(0)
+  marked_sent_at                      DateTime?                          @db.DateTime(0)
+  created_by_id                       Int
+  amount                              Decimal?                           @db.Decimal(9, 0)
+  advisor_create_new_transfer_flow_id BigInt?
+  account_transfer_securities         account_transfer_securities[]
+  advisor_create_new_transfer_flows   advisor_create_new_transfer_flows? @relation(fields: [advisor_create_new_transfer_flow_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_0cdd95c514")
+  accounts                            accounts?                          @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_1880f5b55c")
+  people                              people                             @relation(fields: [created_by_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_6feb34774d")
+
+  @@index([account_id], map: "fk_rails_1880f5b55c")
+  @@index([advisor_create_new_transfer_flow_id], map: "index_account_transfers_on_advisor_create_new_transfer_flow_id")
+  @@index([created_by_id], map: "index_account_transfers_on_created_by_id")
+}
+
+model accounts {
+  id                                                  Int                               @id @default(autoincrement())
+  user_id                                             Int
+  beneficiary_id                                      Int?
+  type_id                                             Int?
+  number                                              String?                           @unique(map: "index_accounts_on_number") @db.VarChar(255)
+  cash                                                Decimal?                          @db.Decimal(17, 2)
+  acknowledge_ips                                     Boolean?
+  acknowledge_fs                                      Boolean?
+  progress                                            Int?
+  rejection_reason                                    String?                           @db.Text
+  created_at                                          DateTime?                         @db.DateTime(0)
+  updated_at                                          DateTime?                         @db.DateTime(0)
+  responsible                                         Boolean?
+  trial_deactivates_at                                DateTime?                         @db.Date
+  trial_expires_at                                    DateTime?                         @db.Date
+  trial_status_id                                     Int?
+  application_completed                               Boolean?
+  skip_rebalancing                                    Boolean                           @default(false)
+  nickname                                            String?                           @db.VarChar(255)
+  client_name_override                                String?                           @db.VarChar(255)
+  approved_at                                         DateTime?                         @db.DateTime(0)
+  closed_at                                           DateTime?                         @db.DateTime(0)
+  group_savings_plan_id                               Int?
+  custodian_id                                        Int                               @default(1)
+  spousal_joint_account                               Boolean?
+  bank_account_id                                     Int?
+  advisor_create_new_account_flow_id                  Int?
+  jurisdiction_id                                     Int?
+  portfolio_option_id                                 Int?
+  external_client_id                                  String?                           @db.VarChar(255)
+  ni54_disclosure_option_id                           Int?
+  ni54_receive_materials_option_id                    Int?
+  ni54_electronic_delivery_option_id                  Int?                              @default(0)
+  return_objective_id                                 Int?
+  trustee                                             String?                           @db.VarChar(255)
+  account_approvals                                   account_approvals[]
+  account_goals                                       account_goals[]
+  account_portfolio_histories                         account_portfolio_histories[]
+  account_transfers                                   account_transfers[]
+  advisor_create_new_account_flows                    advisor_create_new_account_flows? @relation(fields: [advisor_create_new_account_flow_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_33f2f5aec1")
+  group_savings_plans                                 group_savings_plans?              @relation(fields: [group_savings_plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_4803c53170")
+  users                                               users                             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_b1e30bebc8")
+  bank_accounts                                       bank_accounts?                    @relation(fields: [bank_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_cc6e7d1972")
+  activities                                          activities[]
+  allotments                                          allotments[]
+  application_read_models                             application_read_models[]
+  balances                                            balances[]
+  beneficiaries                                       beneficiaries[]
+  charges                                             charges[]
+  contribution_amounts                                contribution_amounts[]
+  dataphile_records                                   dataphile_records[]
+  fund_accounts                                       fund_accounts[]
+  investment_policy_statements                        investment_policy_statements[]
+  joint_applicants                                    joint_applicants[]
+  notes                                               notes[]
+  participants                                        participants[]
+  performance_summaries                               performance_summaries[]
+  positions                                           positions[]
+  raise_cash_requests                                 raise_cash_requests[]
+  rif_details_rif_details_pay_to_account_idToaccounts rif_details[]                     @relation("rif_details_pay_to_account_idToaccounts")
+  rif_details_rif_details_account_idToaccounts        rif_details[]                     @relation("rif_details_account_idToaccounts")
+  source_investment_infos                             source_investment_infos[]
+  successor_holders                                   successor_holders?
+  trading_engine_results                              trading_engine_results[]
+  transfer_requests                                   transfer_requests[]
+  transfers                                           transfers[]
+  trial_simulation_details                            trial_simulation_details[]
+
+  @@index([advisor_create_new_account_flow_id], map: "index_accounts_on_advisor_create_new_account_flow_id")
+  @@index([bank_account_id], map: "index_accounts_on_bank_account_id")
+  @@index([beneficiary_id], map: "index_accounts_on_beneficiary_id")
+  @@index([custodian_id], map: "index_accounts_on_custodian_id")
+  @@index([group_savings_plan_id], map: "index_accounts_on_group_savings_plan_id")
+  @@index([user_id], map: "index_accounts_on_user_id")
+}
+
+model activities {
+  id                      Int       @id @default(autoincrement())
+  type_id                 Int?
+  date                    DateTime? @db.Date
+  description             String?   @db.VarChar(255)
+  account_id              Int?
+  created_at              DateTime  @db.DateTime(0)
+  updated_at              DateTime  @db.DateTime(0)
+  user_id                 Int?
+  notes                   String?   @db.Text
+  external_transaction_id String?   @db.VarChar(255)
+  notification_status_id  Int       @default(0)
+  transaction_code        String?   @db.VarChar(255)
+  amount                  Decimal?  @db.Decimal(17, 4)
+  users                   users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_7e11bb717f")
+  accounts                accounts? @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_e53101708c")
+
+  @@index([account_id], map: "index_activities_on_account_id")
+  @@index([user_id], map: "index_activities_on_user_id")
+}
+
+model addresses {
+  id                  Int      @id @default(autoincrement())
+  country             String?  @db.VarChar(255)
+  locality            String?  @db.VarChar(255)
+  region              String?  @db.VarChar(255)
+  postal_code         String?  @db.VarChar(255)
+  unit                String?  @db.VarChar(255)
+  street_address      String?  @db.VarChar(255)
+  street_number       String?  @db.VarChar(255)
+  street_name         String?  @db.VarChar(255)
+  type_id             Int?
+  same_as_id          Int?
+  contact_id          Int?
+  contact_type        String?  @db.VarChar(255)
+  created_at          DateTime @db.DateTime(0)
+  updated_at          DateTime @db.DateTime(0)
+  street_type         String?  @db.VarChar(255)
+  street_direction_id Int?
+  unit_type           String?  @db.VarChar(255)
+
+  @@index([contact_type, contact_id], map: "index_addresses_on_contact_type_and_contact_id")
+}
+
+model advisor_assignments {
+  id                           Int                        @id @default(autoincrement())
+  client_advisor_assignment_id Int
+  advisor_id                   Int
+  primary                      Boolean?
+  fee_share                    Decimal?                   @db.Decimal(5, 2)
+  created_at                   DateTime                   @db.DateTime(0)
+  updated_at                   DateTime                   @db.DateTime(0)
+  rep_code_id                  BigInt?
+  registered_in_province       Boolean?
+  shared_office_entities       String?                    @db.VarChar(255)
+  people                       people                     @relation(fields: [advisor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_5bfacf7c7a")
+  rep_codes                    rep_codes?                 @relation(fields: [rep_code_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_6d3d1e4fcb")
+  client_advisor_assignments   client_advisor_assignments @relation(fields: [client_advisor_assignment_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_d1d27e364c")
+
+  @@index([advisor_id], map: "fk_rails_5bfacf7c7a")
+  @@index([client_advisor_assignment_id], map: "index_advisor_assignments_on_client_advisor_assignment_id")
+  @@index([rep_code_id], map: "index_advisor_assignments_on_rep_code_id")
+}
+
+model advisor_beneficiary_forms {
+  id                                                            Int                              @id @default(autoincrement())
+  personal_relation_id                                          Int
+  advisor_create_new_account_flow_id                            Int
+  legal_guardian_id                                             Int?
+  legal_guardian_other                                          Boolean                          @default(false)
+  primary_caregiver_id                                          Int?
+  primary_caregiver_other                                       Boolean                          @default(false)
+  type                                                          String                           @db.VarChar(255)
+  percent                                                       Decimal?                         @db.Decimal(5, 2)
+  created_at                                                    DateTime                         @db.DateTime(0)
+  updated_at                                                    DateTime                         @db.DateTime(0)
+  people_advisor_beneficiary_forms_primary_caregiver_idTopeople people?                          @relation("advisor_beneficiary_forms_primary_caregiver_idTopeople", fields: [primary_caregiver_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_224a0d6b63")
+  people_advisor_beneficiary_forms_legal_guardian_idTopeople    people?                          @relation("advisor_beneficiary_forms_legal_guardian_idTopeople", fields: [legal_guardian_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_9d9f1d9946")
+  advisor_create_new_account_flows                              advisor_create_new_account_flows @relation(fields: [advisor_create_new_account_flow_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_c50d78a0ab")
+  personal_relations                                            personal_relations               @relation(fields: [personal_relation_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_f425f85686")
+
+  @@index([primary_caregiver_id], map: "fk_rails_224a0d6b63")
+  @@index([legal_guardian_id], map: "fk_rails_9d9f1d9946")
+  @@index([advisor_create_new_account_flow_id], map: "index_advisor_beneficiary_forms_on_account_flow_id")
+  @@index([personal_relation_id], map: "index_advisor_beneficiary_forms_on_personal_relation_id")
+}
+
+model advisor_create_new_account_flows {
+  id                                                         Int                                 @id @default(autoincrement())
+  goal_type                                                  String?                             @db.VarChar(255)
+  initial                                                    Decimal?                            @db.Decimal(17, 2)
+  ongoing                                                    Decimal?                            @db.Decimal(17, 2)
+  target_amount                                              Decimal?                            @db.Decimal(16, 2)
+  notimeframe                                                Boolean?
+  timeframe                                                  Float?                              @db.Float
+  account_type_id                                            Int?
+  client_id                                                  Int
+  advisor_id                                                 Int
+  created_at                                                 DateTime?                           @db.DateTime(0)
+  updated_at                                                 DateTime?                           @db.DateTime(0)
+  password                                                   String?                             @db.VarChar(255)
+  status                                                     String                              @default("pending") @db.VarChar(255)
+  responsible                                                Boolean                             @default(false)
+  advisor_create_new_client_flow_id                          Int?
+  jurisdiction_id                                            Int?
+  portfolio_option_id                                        Int?
+  account_nickname                                           String?                             @db.VarChar(255)
+  accounts                                                   accounts[]
+  advisor_beneficiary_forms                                  advisor_beneficiary_forms[]
+  people_advisor_create_new_account_flows_advisor_idTopeople people                              @relation("advisor_create_new_account_flows_advisor_idTopeople", fields: [advisor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_1278c27d8a")
+  people_advisor_create_new_account_flows_client_idTopeople  people                              @relation("advisor_create_new_account_flows_client_idTopeople", fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_dffd8d060d")
+  advisor_create_new_transfer_flows                          advisor_create_new_transfer_flows[]
+  application_read_models                                    application_read_models[]
+
+  @@index([advisor_id], map: "fk_rails_1278c27d8a")
+  @@index([client_id], map: "fk_rails_dffd8d060d")
+}
+
+model advisor_create_new_client_flows {
+  id                                                        Int                                             @id @default(autoincrement())
+  client_id                                                 Int
+  advisor_id                                                Int
+  email                                                     String                                          @db.VarChar(255)
+  status                                                    String?                                         @db.VarChar(255)
+  password                                                  String?                                         @unique(map: "index_advisor_create_new_client_flows_on_password") @db.VarChar(255)
+  created_at                                                DateTime?                                       @db.DateTime(0)
+  updated_at                                                DateTime?                                       @db.DateTime(0)
+  advisor_referral_code                                     String?                                         @db.VarChar(255)
+  consent_at                                                DateTime?                                       @db.DateTime(0)
+  people_advisor_create_new_client_flows_advisor_idTopeople people                                          @relation("advisor_create_new_client_flows_advisor_idTopeople", fields: [advisor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_5009430975")
+  people_advisor_create_new_client_flows_client_idTopeople  people                                          @relation("advisor_create_new_client_flows_client_idTopeople", fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_55cae3b731")
+  advisor_create_new_transfer_flows                         advisor_create_new_transfer_flows[]
+  advisor_create_new_transfer_instruction_flows             advisor_create_new_transfer_instruction_flows[]
+  application_read_models                                   application_read_models[]
+
+  @@index([advisor_id], map: "fk_rails_5009430975")
+  @@index([client_id], map: "fk_rails_55cae3b731")
+}
+
+model advisor_create_new_transfer_flows {
+  id                                                          BigInt                                   @id @default(autoincrement())
+  external_account_number                                     String?                                  @db.VarChar(255)
+  institution_name                                            String?                                  @db.VarChar(255)
+  advisor_create_new_client_flow_id                           Int?
+  account_flow_id                                             Int?
+  dsc_id                                                      Int?
+  in_kind                                                     Boolean?
+  partial_transfer                                            Boolean?
+  amount                                                      Decimal?                                 @db.Decimal(9, 0)
+  status                                                      String                                   @default("pending") @db.VarChar(255)
+  expected_amount                                             Decimal?                                 @db.Decimal(9, 0)
+  client_id                                                   Int
+  advisor_id                                                  Int
+  created_at                                                  DateTime                                 @db.DateTime(6)
+  updated_at                                                  DateTime                                 @db.DateTime(6)
+  account_transfers                                           account_transfers[]
+  people_advisor_create_new_transfer_flows_client_idTopeople  people                                   @relation("advisor_create_new_transfer_flows_client_idTopeople", fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_32170d6455")
+  people_advisor_create_new_transfer_flows_advisor_idTopeople people                                   @relation("advisor_create_new_transfer_flows_advisor_idTopeople", fields: [advisor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_34004d5365")
+  advisor_create_new_client_flows                             advisor_create_new_client_flows?         @relation(fields: [advisor_create_new_client_flow_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_45cd0f5de4")
+  advisor_create_new_account_flows                            advisor_create_new_account_flows?        @relation(fields: [account_flow_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_8dbdb47110")
+  advisor_create_new_transfer_securities                      advisor_create_new_transfer_securities[]
+
+  @@index([advisor_create_new_client_flow_id], map: "fk_rails_45cd0f5de4")
+  @@index([account_flow_id], map: "fk_rails_8dbdb47110")
+  @@index([advisor_id], map: "index_advisor_create_new_transfer_flows_on_advisor_id")
+  @@index([client_id], map: "index_advisor_create_new_transfer_flows_on_client_id")
+}
+
+model advisor_create_new_transfer_instruction_flows {
+  id                                                                      BigInt                           @id @default(autoincrement())
+  type_id                                                                 Int?
+  frequency_id                                                            Int?
+  continue_until                                                          DateTime?                        @db.Date
+  max_occurrence                                                          Int?
+  manual_cancel                                                           Boolean?
+  amount                                                                  Decimal?                         @db.Decimal(17, 2)
+  transfer_from_type                                                      String                           @db.VarChar(255)
+  transfer_from_id                                                        BigInt
+  transfer_to_type                                                        String                           @db.VarChar(255)
+  transfer_to_id                                                          BigInt
+  start_date                                                              DateTime?                        @db.Date
+  advisor_create_new_client_flow_id                                       Int?
+  client_id                                                               Int
+  advisor_id                                                              Int
+  instruction_created                                                     Boolean?
+  created_at                                                              DateTime                         @db.DateTime(6)
+  updated_at                                                              DateTime                         @db.DateTime(6)
+  people_advisor_create_new_transfer_instruction_flows_client_idTopeople  people                           @relation("advisor_create_new_transfer_instruction_flows_client_idTopeople", fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_00d38460d6")
+  advisor_create_new_client_flows                                         advisor_create_new_client_flows? @relation(fields: [advisor_create_new_client_flow_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_02fe1ef5ce")
+  people_advisor_create_new_transfer_instruction_flows_advisor_idTopeople people                           @relation("advisor_create_new_transfer_instruction_flows_advisor_idTopeople", fields: [advisor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_f7f742a62d")
+
+  @@index([advisor_create_new_client_flow_id], map: "fk_rails_02fe1ef5ce")
+  @@index([transfer_from_type, transfer_from_id], map: "index_tr_instr_flows_on_transfer_from_type_and_transfer_from_id")
+  @@index([transfer_to_type, transfer_to_id], map: "index_tr_instr_flows_on_transfer_to_type_and_transfer_to_id")
+  @@index([advisor_id], map: "index_transfer_instruction_flows_on_advisor_id")
+  @@index([client_id], map: "index_transfer_instruction_flows_on_client_id")
+}
+
+model advisor_create_new_transfer_securities {
+  id                                  BigInt                             @id @default(autoincrement())
+  advisor_create_new_transfer_flow_id BigInt?
+  description                         String?                            @db.VarChar(255)
+  quantity                            Decimal?                           @db.Decimal(17, 4)
+  created_at                          DateTime                           @db.DateTime(6)
+  updated_at                          DateTime                           @db.DateTime(6)
+  advisor_create_new_transfer_flows   advisor_create_new_transfer_flows? @relation(fields: [advisor_create_new_transfer_flow_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_8238e32af5")
+
+  @@index([advisor_create_new_transfer_flow_id], map: "index_acn_transfer_securities_on_transfer_flow")
+}
+
+model advisor_notification_subscriptions {
+  id                      BigInt   @id @default(autoincrement())
+  advisor_id              Int
+  advisor_notification_id Int
+  created_at              DateTime @db.DateTime(6)
+  updated_at              DateTime @db.DateTime(6)
+  people                  people   @relation(fields: [advisor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_2561aed093")
+
+  @@index([advisor_id], map: "index_advisor_notification_subscriptions_on_advisor_id")
+}
+
+model advisor_service_levels {
+  id                  Int       @id @default(autoincrement())
+  group_id            Int
+  title               String?   @db.VarChar(255)
+  fees                String?   @db.VarChar(255)
+  description_md      String?   @db.Text
+  group_url_id_suffix String?   @db.VarChar(255)
+  created_at          DateTime? @db.DateTime(0)
+  updated_at          DateTime? @db.DateTime(0)
+  hidden              Boolean   @default(false)
+
+  @@index([group_id], map: "index_advisor_service_levels_on_group_id")
+}
+
+model affiliates {
+  id         BigInt       @id @default(autoincrement())
+  name       String       @db.VarChar(255)
+  promotions promotions[]
+}
+
+model allocations {
+  id                                    Int                                     @id @default(autoincrement())
+  fund_id                               Int?
+  model_portfolio_id                    Int?
+  weight                                Float?                                  @db.Float
+  tolerance                             Float?                                  @db.Float
+  created_at                            DateTime?                               @db.DateTime(0)
+  updated_at                            DateTime?                               @db.DateTime(0)
+  min_weight                            Float?                                  @db.Float
+  max_weight                            Float?                                  @db.Float
+  alternative_funds                     alternative_funds[]
+  portfolio_tactical_allocation_targets portfolio_tactical_allocation_targets[]
+
+  @@index([fund_id], map: "index_allocations_on_fund_id")
+  @@index([model_portfolio_id], map: "index_allocations_on_model_portfolio_id")
+}
+
+model allotments {
+  id                        Int       @id @default(autoincrement())
+  target                    Decimal?  @db.Decimal(10, 6)
+  adjusted                  Int?
+  actual                    Int?
+  position_id               Int
+  trade_id                  Int
+  created_at                DateTime  @db.DateTime(0)
+  updated_at                DateTime  @db.DateTime(0)
+  dollar_amount             Decimal?  @default(0.0000) @db.Decimal(17, 4)
+  status_id                 Int?      @default(0)
+  potential_settlement_date DateTime? @db.DateTime(0)
+  account_id                Int?
+  fund_id                   Int?
+  funds                     funds?    @relation(fields: [fund_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_35822e30aa")
+  accounts                  accounts? @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_881e48b645")
+  positions                 positions @relation(fields: [position_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_b65c19f8e3")
+  trades                    trades    @relation(fields: [trade_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_bfdbadb058")
+
+  @@index([account_id], map: "index_allotments_on_account_id")
+  @@index([fund_id], map: "index_allotments_on_fund_id")
+  @@index([position_id], map: "index_allotments_on_position_id")
+  @@index([potential_settlement_date], map: "index_allotments_on_potential_settlement_date")
+  @@index([status_id], map: "index_allotments_on_status_id")
+  @@index([trade_id], map: "index_allotments_on_trade_id")
+}
+
+model alternative_funds {
+  id            Int         @id @default(autoincrement())
+  can_sell      Boolean
+  allocation_id Int
+  fund_id       Int
+  created_at    DateTime?   @db.DateTime(0)
+  updated_at    DateTime?   @db.DateTime(0)
+  allocations   allocations @relation(fields: [allocation_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_20ae9c86c0")
+  funds         funds       @relation(fields: [fund_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_e1407a964e")
+
+  @@index([allocation_id], map: "index_alternative_funds_on_allocation_id")
+  @@index([fund_id], map: "index_alternative_funds_on_fund_id")
+}
+
+model application_read_models {
+  id                                 BigInt                            @id @default(autoincrement())
+  account_id                         Int?
+  advisor_create_new_account_flow_id Int?
+  advisor_create_new_client_flow_id  Int?
+  user_id                            Int
+  primary_advisor_user_id            Int?
+  sent_at                            DateTime?                         @db.DateTime(0)
+  started_at                         DateTime?                         @db.DateTime(0)
+  opened_at                          DateTime?                         @db.DateTime(0)
+  rejected_at                        DateTime?                         @db.DateTime(0)
+  application_status                 String?                           @db.VarChar(255)
+  account_status_id                  Int?
+  status_id                          Int?
+  type_id                            Int?
+  portfolio_option_id                Int?
+  client_name                        String?                           @db.VarChar(255)
+  email                              String?                           @db.VarChar(255)
+  primary_advisor_name               String?                           @db.VarChar(255)
+  search_terms                       String?                           @db.VarChar(255)
+  application_completed              Boolean?
+  created_at                         DateTime                          @db.DateTime(6)
+  updated_at                         DateTime                          @db.DateTime(6)
+  advisor_create_new_account_flows   advisor_create_new_account_flows? @relation(fields: [advisor_create_new_account_flow_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_1893af1a21")
+  accounts                           accounts?                         @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_3e22303528")
+  advisor_create_new_client_flows    advisor_create_new_client_flows?  @relation(fields: [advisor_create_new_client_flow_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_64c209d9c9")
+  users                              users                             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_772abd3521")
+
+  @@index([search_terms], map: "application_read_models_fulltext_index")
+  @@index([primary_advisor_user_id], map: "index_application_read_models_on_primary_advisor_user_id")
+  @@index([advisor_create_new_account_flow_id], map: "index_application_rm_on_account_flow_id")
+  @@index([account_id], map: "index_application_rm_on_account_id")
+  @@index([advisor_create_new_client_flow_id], map: "index_application_rm_on_client_flow_id")
+  @@index([user_id], map: "index_application_rm_on_user_id")
+}
+
+model ar_internal_metadata {
+  key        String   @id @db.VarChar(255)
+  value      String?  @db.VarChar(255)
+  created_at DateTime @db.DateTime(6)
+  updated_at DateTime @db.DateTime(6)
+}
+
+model assets_under_management_histories {
+  id         BigInt   @id @default(autoincrement())
+  date       DateTime @db.Date
+  amount     Decimal  @db.Decimal(17, 2)
+  group_id   Int
+  created_at DateTime @db.DateTime(6)
+  updated_at DateTime @db.DateTime(6)
+  groups     groups   @relation(fields: [group_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_ba1832f916")
+
+  @@unique([date, group_id], map: "index_assets_under_management_histories_on_date_and_group_id")
+  @@index([group_id], map: "index_assets_under_management_histories_on_group_id")
+}
+
+model audits {
+  id              Int       @id @default(autoincrement())
+  auditable_id    Int?
+  auditable_type  String?   @db.VarChar(255)
+  associated_id   Int?
+  associated_type String?   @db.VarChar(255)
+  user_id         Int?
+  user_type       String?   @db.VarChar(255)
+  username        String?   @db.VarChar(255)
+  action          String?   @db.VarChar(255)
+  audited_changes String?   @db.Text
+  version         Int?      @default(0)
+  comment         String?   @db.VarChar(255)
+  remote_address  String?   @db.VarChar(255)
+  request_uuid    String?   @db.VarChar(255)
+  created_at      DateTime? @db.DateTime(0)
+
+  @@index([associated_id, associated_type], map: "associated_index")
+  @@index([auditable_id, auditable_type], map: "auditable_index")
+  @@index([created_at], map: "index_audits_on_created_at")
+  @@index([request_uuid], map: "index_audits_on_request_uuid")
+  @@index([user_id, user_type], map: "user_index")
+}
+
+model authentication_factors {
+  id                Int       @id @default(autoincrement())
+  activation_date   DateTime? @db.DateTime(0)
+  deactivation_date DateTime? @db.DateTime(0)
+  phone_number      String?   @db.VarChar(255)
+  contact_method    String?   @db.VarChar(255)
+  user_id           Int?
+  created_at        DateTime  @db.DateTime(0)
+  updated_at        DateTime  @db.DateTime(0)
+
+  @@index([user_id], map: "index_authentication_factors_on_user_id")
+}
+
+model balances {
+  id         Int       @id @default(autoincrement())
+  account_id Int?
+  date       DateTime? @db.Date
+  amount     Decimal?  @db.Decimal(17, 2)
+  created_at DateTime  @db.DateTime(0)
+  updated_at DateTime  @db.DateTime(0)
+  accounts   accounts? @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_9452e1f8fd")
+
+  @@index([account_id], map: "index_balances_on_account_id")
+}
+
+model bank_accounts {
+  id                     Int                 @id @default(autoincrement())
+  number                 String?             @db.VarChar(255)
+  transit                String?             @db.VarChar(255)
+  bank_code              String?             @db.VarChar(255)
+  user_id                Int
+  created_at             DateTime            @db.DateTime(0)
+  updated_at             DateTime            @db.DateTime(0)
+  verification_method_id Int?
+  approved               Boolean             @default(false)
+  status_id              Int                 @default(0)
+  deactivated_at         DateTime?           @db.DateTime(0)
+  bank_name              String?             @db.VarChar(255)
+  accounts               accounts[]
+  users                  users               @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_92daa8a387")
+  rif_details            rif_details[]
+  transfer_requests      transfer_requests[]
+
+  @@index([user_id], map: "index_bank_accounts_on_user_id")
+}
+
+model bbs_eod_activities {
+  id                 Int      @id @default(autoincrement())
+  process_date_int   Int?
+  effective_date     Int?
+  account_number     String?  @db.VarChar(255)
+  client_name        String?  @db.VarChar(255)
+  transaction_id     String?  @db.VarChar(255)
+  sub_transaction_id String?  @db.VarChar(255)
+  symbol             String?  @db.VarChar(255)
+  cusip              String?  @db.VarChar(255)
+  transaction_desc   String?  @db.VarChar(255)
+  transaction_type   String?  @db.VarChar(255)
+  quantity           Decimal? @db.Decimal(14, 4)
+  commission         Decimal? @db.Decimal(14, 4)
+  price              Decimal? @db.Decimal(14, 4)
+  accrued_interest   Decimal? @db.Decimal(14, 4)
+  amount_value       Decimal? @db.Decimal(14, 4)
+  security_type      String?  @db.VarChar(255)
+  currency           String?  @db.VarChar(255)
+  external_id        String   @unique(map: "index_bbs_eod_activities_on_external_id") @db.VarChar(255)
+  created_at         DateTime @db.DateTime(0)
+  updated_at         DateTime @db.DateTime(0)
+}
+
+model bbs_eod_cashes {
+  id                              Int       @id @default(autoincrement())
+  insert_date                     DateTime? @db.Date
+  account_number                  String?   @db.VarChar(255)
+  full_name                       String?   @db.VarChar(255)
+  currency_code                   String?   @db.VarChar(255)
+  current_trade_date_balance      Decimal?  @db.Decimal(14, 4)
+  current_settlement_date_balance Decimal?  @db.Decimal(14, 4)
+  market_value                    Decimal?  @db.Decimal(14, 4)
+  loan_value                      Decimal?  @db.Decimal(14, 4)
+  rtm_excess                      Decimal?  @db.Decimal(14, 4)
+  rts_equity                      Decimal?  @db.Decimal(14, 4)
+  account_type                    String?   @db.VarChar(255)
+  external_id                     String    @unique(map: "index_bbs_eod_cashes_on_external_id") @db.VarChar(255)
+  created_at                      DateTime  @db.DateTime(0)
+  updated_at                      DateTime  @db.DateTime(0)
+}
+
+model bbs_eod_positions {
+  id              Int       @id @default(autoincrement())
+  account         String?   @db.VarChar(255)
+  cusip           String?   @db.VarChar(255)
+  symbol          String?   @db.VarChar(255)
+  security_type   String?   @db.VarChar(255)
+  country_code    String?   @db.VarChar(255)
+  currency        String?   @db.VarChar(255)
+  quantity        Decimal?  @db.Decimal(14, 6)
+  price           Decimal?  @db.Decimal(14, 6)
+  strike_price    Decimal?  @db.Decimal(14, 6)
+  call_or_put     String?   @db.VarChar(255)
+  expiration_date DateTime? @db.Date
+  book_value      Decimal?  @db.Decimal(14, 4)
+  external_id     String    @unique(map: "index_bbs_eod_positions_on_external_id") @db.VarChar(255)
+  created_at      DateTime  @db.DateTime(0)
+  updated_at      DateTime  @db.DateTime(0)
+}
+
+model beneficiaries {
+  id                                                Int                @id @default(autoincrement())
+  personal_relation_id                              Int
+  account_id                                        Int
+  user_id                                           Int?
+  primary_caregiver_id                              Int?
+  primary_caregiver_other                           Boolean            @default(false)
+  legal_guardian_id                                 Int?
+  legal_guardian_other                              Boolean            @default(false)
+  created_at                                        DateTime           @db.DateTime(0)
+  updated_at                                        DateTime           @db.DateTime(0)
+  type                                              String?            @db.VarChar(255)
+  percent                                           Decimal?           @db.Decimal(5, 2)
+  people_beneficiaries_primary_caregiver_idTopeople people?            @relation("beneficiaries_primary_caregiver_idTopeople", fields: [primary_caregiver_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_301a671b2c")
+  personal_relations                                personal_relations @relation(fields: [personal_relation_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_4e8294fa10")
+  people_beneficiaries_legal_guardian_idTopeople    people?            @relation("beneficiaries_legal_guardian_idTopeople", fields: [legal_guardian_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_8e784869b5")
+  accounts                                          accounts           @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_927918f722")
+  users                                             users?             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_e4c95811d8")
+
+  @@unique([personal_relation_id, account_id], map: "index_beneficiaries_on_personal_relation_id_and_account_id")
+  @@index([primary_caregiver_id], map: "fk_rails_301a671b2c")
+  @@index([legal_guardian_id], map: "fk_rails_8e784869b5")
+  @@index([account_id], map: "index_beneficiaries_on_account_id")
+  @@index([personal_relation_id], map: "index_beneficiaries_on_personal_relation_id")
+  @@index([user_id], map: "index_beneficiaries_on_user_id")
+}
+
+model branches {
+  id         BigInt      @id @default(autoincrement())
+  code       String?     @db.VarChar(255)
+  name       String?     @db.VarChar(255)
+  created_at DateTime    @db.DateTime(6)
+  updated_at DateTime    @db.DateTime(6)
+  rep_codes  rep_codes[]
+
+  @@index([code], map: "index_branches_on_code")
+}
+
+model brokerage_accounts {
+  id         Int      @id @default(autoincrement())
+  firm_name  String?  @db.VarChar(255)
+  number     String?  @db.VarChar(255)
+  user_id    Int?
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+  users      users?   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_13a1668c92")
+
+  @@index([user_id], map: "index_brokerage_accounts_on_user_id")
+}
+
+model charges {
+  id              Int      @id @default(autoincrement())
+  category_id     Int
+  amount          Decimal  @db.Decimal(17, 4)
+  date            DateTime @db.Date
+  account_id      Int
+  related_to_id   Int?
+  related_to_type String?  @db.VarChar(255)
+  created_at      DateTime @db.DateTime(0)
+  updated_at      DateTime @db.DateTime(0)
+  accounts        accounts @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_7422c2ed13")
+
+  @@index([account_id], map: "index_charges_on_account_id")
+  @@index([related_to_type, related_to_id], map: "index_charges_on_related_to_type_and_related_to_id")
+}
+
+model choices {
+  id          Int       @id @default(autoincrement())
+  label       String?   @db.VarChar(255)
+  value       String?   @db.VarChar(255)
+  description String?   @db.VarChar(255)
+  order       Int?
+  question_id Int?
+  created_at  DateTime? @db.DateTime(0)
+  updated_at  DateTime? @db.DateTime(0)
+
+  @@index([question_id], map: "index_choices_on_question_id")
+}
+
+model client_advisor_assignment_flows {
+  id             BigInt    @id @default(autoincrement())
+  client_id      Int
+  group_id       Int
+  ima_doc_id     Int
+  effective_date DateTime? @db.DateTime(0)
+  created_at     DateTime  @db.DateTime(6)
+  updated_at     DateTime  @db.DateTime(6)
+  documents      documents @relation(fields: [ima_doc_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_5f4bf85f97")
+  groups         groups    @relation(fields: [group_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_8bbc93fa8b")
+  users          users     @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_903c763c4a")
+
+  @@index([client_id], map: "index_client_advisor_assignment_flows_on_client_id")
+  @@index([group_id], map: "index_client_advisor_assignment_flows_on_group_id")
+  @@index([ima_doc_id], map: "index_client_advisor_assignment_flows_on_ima_doc_id")
+}
+
+model client_advisor_assignments {
+  id                  Int                   @id @default(autoincrement())
+  client_id           Int?
+  note                String?               @db.VarChar(255)
+  effective_date      DateTime?             @db.Date
+  created_at          DateTime              @db.DateTime(0)
+  updated_at          DateTime              @db.DateTime(0)
+  advisor_assignments advisor_assignments[]
+  people              people?               @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_940fee5a73")
+
+  @@index([client_id], map: "fk_rails_940fee5a73")
+}
+
+model client_read_models {
+  id                   Int       @id @default(autoincrement())
+  person_id            Int?      @unique(map: "index_client_read_models_on_person_id")
+  first_name           String?   @db.VarChar(255)
+  last_name            String?   @db.VarChar(255)
+  since                DateTime? @db.DateTime(0)
+  email                String?   @db.VarChar(255)
+  balance              Decimal?  @db.Decimal(17, 2)
+  last_kyc             DateTime? @db.DateTime(0)
+  calculated_fee_level Float?    @db.Float
+  search_terms         String?   @db.VarChar(255)
+  created_at           DateTime  @db.DateTime(0)
+  updated_at           DateTime  @db.DateTime(0)
+  people               people?   @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_c0ed1c793d")
+
+  @@index([search_terms], map: "client_read_models_fulltext_index")
+}
+
+model co_brand_infos {
+  id                 BigInt   @id @default(autoincrement())
+  url_id             String   @unique(map: "index_co_brand_infos_on_url_id") @db.VarChar(255)
+  name               String?  @db.VarChar(255)
+  cobrand            String?  @db.VarChar(255)
+  cobrand_logo       String?  @db.VarChar(255)
+  header_image       String?  @db.VarChar(255)
+  landing_page       String?  @db.VarChar(255)
+  institution_prefix String?  @db.VarChar(255)
+  created_at         DateTime @db.DateTime(6)
+  updated_at         DateTime @db.DateTime(6)
+}
+
+model companies {
+  id                  Int                   @id @default(autoincrement())
+  name                String                @db.VarChar(255)
+  created_at          DateTime              @db.DateTime(0)
+  updated_at          DateTime              @db.DateTime(0)
+  group_savings_plans group_savings_plans[]
+}
+
+model completed_risk_appetite_quizzes {
+  id                                  Int                                   @id @default(autoincrement())
+  completed_at                        DateTime                              @db.DateTime(0)
+  risk_appetite_quiz_id               Int
+  person_id                           Int
+  created_at                          DateTime                              @db.DateTime(0)
+  updated_at                          DateTime                              @db.DateTime(0)
+  people                              people                                @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_1082e01f4d")
+  risk_appetite_quizzes               risk_appetite_quizzes                 @relation(fields: [risk_appetite_quiz_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_d3b4e6db9f")
+  risk_appetite_calculations          risk_appetite_calculations[]
+  selected_risk_appetite_quiz_choices selected_risk_appetite_quiz_choices[]
+
+  @@index([person_id], map: "index_completed_risk_appetite_quizzes_on_person_id")
+  @@index([risk_appetite_quiz_id], map: "index_completed_risk_appetite_quizzes_on_risk_appetite_quiz_id")
+}
+
+model contribution_amounts {
+  id             Int      @id @default(autoincrement())
+  percent        Decimal? @db.Decimal(5, 2)
+  dollar_amount  Decimal? @db.Decimal(10, 0)
+  effective_date DateTime @db.Date
+  account_id     Int
+  created_at     DateTime @db.DateTime(0)
+  updated_at     DateTime @db.DateTime(0)
+  accounts       accounts @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_139e9011c3")
+
+  @@index([account_id], map: "index_contribution_amounts_on_account_id")
+}
+
+model csi_eod_accounts {
+  id                 Int       @id @default(autoincrement())
+  client_id          String?   @db.VarChar(255)
+  account_number     String?   @db.VarChar(255)
+  account_short_name String?   @db.VarChar(255)
+  acct_type          Int?
+  acct_sub_type      String?   @db.VarChar(255)
+  acct_class         Int?
+  fund_type          String?   @db.VarChar(255)
+  status             String?   @db.VarChar(255)
+  trades_ok          String?   @db.VarChar(255)
+  market_val         Decimal?  @db.Decimal(17, 4)
+  loan_val           Decimal?  @db.Decimal(17, 4)
+  file_date          DateTime? @db.Date
+  external_id        String?   @unique(map: "index_csi_eod_accounts_on_external_id") @db.VarChar(255)
+  created_at         DateTime  @db.DateTime(0)
+  updated_at         DateTime  @db.DateTime(0)
+  settled_cash       Decimal?  @db.Decimal(17, 4)
+
+  @@index([file_date], map: "index_csi_eod_accounts_on_file_date")
+}
+
+model csi_eod_clients {
+  id             Int       @id @default(autoincrement())
+  client_id      String?   @db.VarChar(255)
+  first_name     String?   @db.VarChar(255)
+  last_name      String?   @db.VarChar(255)
+  birth_date     DateTime? @db.Date
+  open_date      DateTime? @db.Date
+  close_date     DateTime? @db.Date
+  sin            String?   @db.VarChar(255)
+  sps_birth_date DateTime? @db.Date
+  sps_name       String?   @db.VarChar(255)
+  sps_sin        String?   @db.VarChar(255)
+  recipient_type Int?
+  residence      Int?
+  status         String?   @db.VarChar(255)
+  branch         String?   @db.VarChar(255)
+  citizen_iso    String?   @db.VarChar(255)
+  file_date      DateTime? @db.Date
+  external_id    String?   @unique(map: "index_csi_eod_clients_on_external_id") @db.VarChar(255)
+  created_at     DateTime  @db.DateTime(0)
+  updated_at     DateTime  @db.DateTime(0)
+
+  @@index([file_date], map: "index_csi_eod_clients_on_file_date")
+}
+
+model csi_eod_positions {
+  id                   Int       @id @default(autoincrement())
+  account_number       String?   @db.VarChar(255)
+  security_description String?   @db.VarChar(255)
+  security_fund_type   String?   @db.VarChar(255)
+  cusip                String?   @db.VarChar(255)
+  end_of_day_positions DateTime? @db.Date
+  quantity             Decimal?  @db.Decimal(17, 4)
+  market_value         Decimal?  @db.Decimal(17, 4)
+  cur_cost             Decimal?  @db.Decimal(17, 4)
+  loan_val             Decimal?  @db.Decimal(17, 4)
+  file_date            DateTime? @db.Date
+  external_id          String?   @unique(map: "index_csi_eod_positions_on_external_id") @db.VarChar(255)
+  created_at           DateTime  @db.DateTime(0)
+  updated_at           DateTime  @db.DateTime(0)
+
+  @@index([end_of_day_positions, account_number], map: "index_eod_positions_date_account_number")
+  @@index([end_of_day_positions, cusip], map: "index_eod_positions_date_cusip")
+}
+
+model csi_eod_settled_positions {
+  id                   Int       @id @default(autoincrement())
+  account_number       String?   @db.VarChar(255)
+  security_description String?   @db.VarChar(255)
+  security_fund_type   String?   @db.VarChar(255)
+  cusip                String?   @db.VarChar(255)
+  end_of_day_positions DateTime? @db.Date
+  quantity             Decimal?  @db.Decimal(17, 4)
+  market_value         Decimal?  @db.Decimal(17, 4)
+  cur_cost             Decimal?  @db.Decimal(17, 4)
+  loan_val             Decimal?  @db.Decimal(17, 4)
+  file_date            DateTime? @db.Date
+  external_id          String?   @unique(map: "index_csi_eod_settled_positions_on_external_id") @db.VarChar(255)
+  created_at           DateTime  @db.DateTime(0)
+  updated_at           DateTime  @db.DateTime(0)
+  client_id            String?   @db.VarChar(255)
+  branch               String?   @db.VarChar(255)
+  rr                   String?   @db.VarChar(255)
+
+  @@index([end_of_day_positions, account_number], map: "index_eod_settled_positions_date_account_number")
+  @@index([end_of_day_positions, cusip], map: "index_eod_settled_positions_date_cusip")
+}
+
+model csi_eod_trailer_shares {
+  id             Int       @id @default(autoincrement())
+  account_number String?   @db.VarChar(255)
+  cusip          String?   @db.VarChar(255)
+  mgt_company    String?   @db.VarChar(255)
+  fund_type      String?   @db.VarChar(255)
+  trailer        Decimal?  @db.Decimal(17, 4)
+  rep_code       String?   @db.VarChar(255)
+  process_date   DateTime? @db.Date
+  trailer_share  Decimal?  @db.Decimal(17, 4)
+  external_id    String?   @unique(map: "index_csi_eod_trailer_shares_on_external_id") @db.VarChar(255)
+  created_at     DateTime  @db.DateTime(0)
+  updated_at     DateTime  @db.DateTime(0)
+}
+
+model csi_eod_transactions {
+  id                   Int       @id @default(autoincrement())
+  account_number       String?   @db.VarChar(255)
+  transaction_code     String?   @db.VarChar(255)
+  security_class       String?   @db.VarChar(255)
+  security_description String?   @db.VarChar(255)
+  description          String?   @db.VarChar(255)
+  cusip                String?   @db.VarChar(255)
+  trade_date           DateTime? @db.Date
+  settle_date          DateTime? @db.Date
+  process_date         DateTime? @db.Date
+  quantity             Decimal?  @db.Decimal(17, 4)
+  amount               Decimal?  @db.Decimal(17, 4)
+  fund_type            String?   @db.VarChar(255)
+  cost                 Decimal?  @db.Decimal(17, 4)
+  exchange_rate        Decimal?  @db.Decimal(17, 4)
+  rr                   String?   @db.VarChar(255)
+  file_date            DateTime? @db.Date
+  unit_price           Decimal?  @db.Decimal(17, 5)
+  commission           Decimal?  @db.Decimal(17, 4)
+  tax                  Decimal?  @db.Decimal(17, 4)
+  accrued_int          Decimal?  @db.Decimal(17, 4)
+  fees                 Decimal?  @db.Decimal(17, 4)
+  cancelled            String?   @db.VarChar(255)
+  external_id          String?   @unique(map: "index_csi_eod_transactions_on_external_id") @db.VarChar(255)
+  created_at           DateTime  @db.DateTime(0)
+  updated_at           DateTime  @db.DateTime(0)
+  manual_cancel        Boolean?
+
+  @@index([account_number, settle_date], map: "index_eod_transactions_account_number_settle_date")
+}
+
+model custodians {
+  id                           Int                            @id @default(autoincrement())
+  name                         String?                        @db.VarChar(255)
+  code                         String?                        @db.VarChar(255)
+  created_at                   DateTime                       @db.DateTime(0)
+  updated_at                   DateTime                       @db.DateTime(0)
+  preferred_custodians         preferred_custodians[]
+  raise_cash_requests          raise_cash_requests[]
+  trade_reconciliation_reports trade_reconciliation_reports[]
+}
+
+model dataphile_records {
+  id              BigInt    @id @default(autoincrement())
+  request_payload String?   @db.Text
+  response        String?   @db.Text
+  account_id      Int?
+  created_at      DateTime  @db.DateTime(6)
+  updated_at      DateTime  @db.DateTime(6)
+  accounts        accounts? @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_117c8aca1a")
+
+  @@index([account_id], map: "index_dataphile_records_on_account_id")
+}
+
+model delayed_job_groups {
+  id                          Int     @id @default(autoincrement())
+  on_completion_job           String? @db.Text
+  on_completion_job_options   String? @db.Text
+  on_cancellation_job         String? @db.Text
+  on_cancellation_job_options String? @db.Text
+  failure_cancels_group       Boolean @default(true)
+  queueing_complete           Boolean @default(false)
+  blocked                     Boolean @default(false)
+}
+
+model delayed_jobs {
+  id           Int       @id @default(autoincrement())
+  priority     Int       @default(0)
+  attempts     Int       @default(0)
+  handler      String    @db.Text
+  last_error   String?   @db.Text
+  run_at       DateTime? @db.DateTime(0)
+  locked_at    DateTime? @db.DateTime(0)
+  failed_at    DateTime? @db.DateTime(0)
+  locked_by    String?   @db.VarChar(255)
+  queue        String?   @db.VarChar(255)
+  created_at   DateTime? @db.DateTime(0)
+  updated_at   DateTime? @db.DateTime(0)
+  blocked      Boolean   @default(false)
+  job_group_id Int?
+
+  @@index([priority, run_at], map: "delayed_jobs_priority")
+  @@index([job_group_id], map: "index_delayed_jobs_on_job_group_id")
+}
+
+model dependencies {
+  id          Int       @id @default(autoincrement())
+  on          String?   @db.VarChar(255)
+  operator    String?   @db.VarChar(255)
+  value       String?   @db.VarChar(255)
+  question_id Int
+  created_at  DateTime  @db.DateTime(0)
+  updated_at  DateTime  @db.DateTime(0)
+  questions   questions @relation(fields: [question_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_d7ffce842a")
+
+  @@index([question_id], map: "index_dependencies_on_question_id")
+}
+
+model document_processing_results {
+  id          Int       @id @default(autoincrement())
+  document_id Int
+  results     String?   @db.VarChar(255)
+  messages    String?   @db.VarChar(255)
+  status      String?   @db.VarChar(255)
+  started_at  DateTime? @db.DateTime(0)
+  finished_at DateTime? @db.DateTime(0)
+  created_at  DateTime  @db.DateTime(0)
+  updated_at  DateTime  @db.DateTime(0)
+  documents   documents @relation(fields: [document_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_c3ff017f03")
+
+  @@index([document_id], map: "index_document_processing_results_on_document_id")
+}
+
+model documents {
+  id                              Int                               @id @default(autoincrement())
+  adc_key                         String?                           @db.VarChar(255)
+  aws_key                         String?                           @db.VarChar(255)
+  type_id                         Int?
+  signed_at                       DateTime?                         @db.DateTime(0)
+  approved_at                     DateTime?                         @db.DateTime(0)
+  user_id                         Int
+  related_to_id                   Int
+  related_to_type                 String                            @db.VarChar(255)
+  http_user                       String?                           @db.VarChar(255)
+  http_pass                       String?                           @db.VarChar(255)
+  created_at                      DateTime                          @db.DateTime(0)
+  updated_at                      DateTime                          @db.DateTime(0)
+  widget_id                       String?                           @db.VarChar(255)
+  widget_url                      String?                           @db.VarChar(255)
+  widget_redirect_received_at     DateTime?                         @db.DateTime(0)
+  description                     String?                           @db.VarChar(255)
+  external_document_id            String?                           @unique(map: "index_documents_on_external_document_id", length: 500) @db.Text
+  client_advisor_assignment_flows client_advisor_assignment_flows[]
+  document_processing_results     document_processing_results[]
+  users                           users                             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_2be0318c46")
+
+  @@index([related_to_type, related_to_id], map: "index_documents_on_related_to_type_and_related_to_id")
+  @@index([user_id], map: "index_documents_on_user_id")
+}
+
+model enum_values {
+  id         Int      @id @default(autoincrement())
+  type       String?  @db.VarChar(255)
+  vid        Int?
+  name       String?  @db.VarChar(255)
+  label      String?  @db.VarChar(255)
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+
+  @@unique([type, vid], map: "index_enum_values_on_type_and_vid")
+}
+
+model eod_files {
+  id         Int      @id @default(autoincrement())
+  filename   String?  @unique(map: "index_eod_files_on_filename") @db.VarChar(255)
+  file_type  String?  @db.VarChar(255)
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+}
+
+model external_advisor_services {
+  id            BigInt   @id @default(autoincrement())
+  group_id      Int?
+  service_index Int?
+  service       String?  @db.Text
+  created_at    DateTime @db.DateTime(0)
+  updated_at    DateTime @db.DateTime(0)
+  groups        groups?  @relation(fields: [group_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_4aa01446c6")
+
+  @@index([group_id], map: "index_external_advisor_services_on_group_id")
+}
+
+model external_identity_checks {
+  id                       Int      @id @default(autoincrement())
+  person_id                Int?
+  completed_at             DateTime @db.DateTime(0)
+  identity_verified        Boolean
+  credit_file_reference_id String?  @db.VarChar(255)
+  request_body             String   @db.Text
+  response_body            String   @db.Text
+  created_at               DateTime @db.DateTime(0)
+  updated_at               DateTime @db.DateTime(0)
+  service_id               Int
+  personal_info_input      String   @db.Text
+  results                  String   @db.Text
+  people                   people?  @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_018e3abc36")
+
+  @@index([person_id], map: "index_external_identity_checks_on_person_id")
+}
+
+model fcc_audit_records {
+  id              BigInt   @id @default(autoincrement())
+  request         String?  @db.Text
+  response        String?  @db.Text
+  request_id      String?  @db.VarChar(255)
+  related_to_type String?  @db.VarChar(255)
+  related_to_id   BigInt?
+  created_at      DateTime @db.DateTime(6)
+  updated_at      DateTime @db.DateTime(6)
+
+  @@index([related_to_type, related_to_id], map: "index_fcc_audit_records_on_related_to_type_and_related_to_id")
+  @@index([request_id], map: "index_fcc_audit_records_on_request_id")
+}
+
+model fee_credit_accounts {
+  id                      Int                       @id @default(autoincrement())
+  person_id               Int?
+  created_at              DateTime                  @db.DateTime(0)
+  updated_at              DateTime                  @db.DateTime(0)
+  people                  people?                   @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_d9631f050b")
+  fee_credit_transactions fee_credit_transactions[]
+
+  @@index([person_id], map: "index_fee_credit_accounts_on_person_id")
+}
+
+model fee_credit_transactions {
+  id                    Int                  @id @default(autoincrement())
+  amount                Decimal?             @db.Decimal(17, 2)
+  date                  DateTime?            @db.Date
+  added_by_id           Int?
+  notes                 String?              @db.Text
+  fee_credit_account_id Int?
+  related_to_id         Int?
+  related_to_type       String?              @db.VarChar(255)
+  created_at            DateTime             @db.DateTime(0)
+  updated_at            DateTime             @db.DateTime(0)
+  users                 users?               @relation(fields: [added_by_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_51df9d9508")
+  fee_credit_accounts   fee_credit_accounts? @relation(fields: [fee_credit_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_fdf586e793")
+
+  @@index([added_by_id], map: "fk_rails_51df9d9508")
+  @@index([fee_credit_account_id], map: "index_fee_credit_transactions_on_fee_credit_account_id")
+  @@index([related_to_type, related_to_id], map: "index_fee_credit_transactions_on_related_to_type_and_id")
+}
+
+model fee_schedule_assignments {
+  id              Int           @id @default(autoincrement())
+  fee_schedule_id Int
+  user_id         Int
+  notes           String?       @db.VarChar(255)
+  effective_date  DateTime?     @db.Date
+  created_at      DateTime      @db.DateTime(0)
+  updated_at      DateTime      @db.DateTime(0)
+  fee_schedules   fee_schedules @relation(fields: [fee_schedule_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_6938abcec5")
+  users           users         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_e6d442b880")
+
+  @@index([fee_schedule_id], map: "fk_rails_6938abcec5")
+  @@index([user_id], map: "fk_rails_e6d442b880")
+}
+
+model fee_schedules {
+  id                       Int                        @id @default(autoincrement())
+  code                     String?                    @unique(map: "index_fee_schedules_on_code") @db.VarChar(32)
+  name                     String?                    @db.VarChar(255)
+  created_at               DateTime                   @db.DateTime(0)
+  updated_at               DateTime                   @db.DateTime(0)
+  marginal                 Boolean                    @default(false)
+  fee_schedule_assignments fee_schedule_assignments[]
+  fee_tiers                fee_tiers[]
+  groups                   groups[]
+}
+
+model fee_tiers {
+  id                          Int            @id @default(autoincrement())
+  minimum                     Decimal?       @db.Decimal(10, 2)
+  fee                         Decimal?       @db.Decimal(10, 2)
+  trailer_fee                 Decimal?       @db.Decimal(10, 2)
+  fee_schedule_id             Int?
+  created_at                  DateTime       @db.DateTime(0)
+  updated_at                  DateTime       @db.DateTime(0)
+  flat_fee                    Decimal?       @db.Decimal(10, 2)
+  ma_rl1_core_fee             Decimal?       @db.Decimal(10, 2)
+  ma_rl1_adaptive_fee         Decimal?       @db.Decimal(10, 2)
+  ma_rl2_10_core_fee          Decimal?       @db.Decimal(10, 2)
+  ma_rl2_10_adaptive_fee      Decimal?       @db.Decimal(10, 2)
+  ma_non_resp_min_monthly_fee Decimal?       @db.Decimal(10, 2)
+  ma_resp_min_monthly_fee     Decimal?       @db.Decimal(10, 2)
+  ma_maximum_fee              Decimal?       @db.Decimal(10, 2)
+  fee_schedules               fee_schedules? @relation(fields: [fee_schedule_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_7ec5482f69")
+
+  @@index([fee_schedule_id, minimum], map: "fee_tiers_fee_schedule_minimum_idx")
+  @@index([fee_schedule_id], map: "index_fee_tiers_on_fee_schedule_id")
+}
+
+model fillable_pdf_form_parameters {
+  id     Int     @id @default(autoincrement())
+  params String? @db.Text
+}
+
+model financial_interests {
+  id                   BigInt  @id @default(autoincrement())
+  account_id           BigInt?
+  personal_relation_id BigInt?
+
+  @@index([account_id], map: "index_financial_interests_on_account_id")
+  @@index([personal_relation_id], map: "index_financial_interests_on_personal_relation_id")
+}
+
+model fund_accounts {
+  id         BigInt    @id @default(autoincrement())
+  fund_id    Int?
+  account_id Int?
+  number     String?   @db.VarChar(255)
+  created_at DateTime  @db.DateTime(6)
+  updated_at DateTime  @db.DateTime(6)
+  funds      funds?    @relation(fields: [fund_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_07c818f6a9")
+  accounts   accounts? @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_a2c01a6ffd")
+
+  @@unique([account_id, fund_id], map: "index_fund_accounts_on_account_id_and_fund_id")
+  @@index([account_id], map: "index_fund_accounts_on_account_id")
+  @@index([fund_id], map: "index_fund_accounts_on_fund_id")
+}
+
+model funds {
+  id                  Int                 @id @default(autoincrement())
+  symbol              String?             @db.VarChar(255)
+  cusip               String?             @db.VarChar(255)
+  label               String?             @db.VarChar(255)
+  asset_description   String?             @db.VarChar(255)
+  asset_type_id       Int?
+  asset_region_id     Int?
+  asset_term_id       Int?
+  fee                 Float?              @db.Float
+  created_at          DateTime?           @db.DateTime(0)
+  updated_at          DateTime?           @db.DateTime(0)
+  ask                 Decimal?            @db.Decimal(11, 5)
+  bid                 Decimal?            @db.Decimal(11, 5)
+  last_trade          Decimal?            @db.Decimal(11, 5)
+  volume              Int?
+  last_trade_time     DateTime?           @db.DateTime(0)
+  usd                 Boolean?            @default(false)
+  asset_class_id      Int
+  initial_purchase    Decimal?            @default(0.0000) @db.Decimal(10, 4)
+  subsequent_purchase Decimal?            @default(0.0000) @db.Decimal(10, 4)
+  settlement_delay    Int?                @default(0)
+  allotments          allotments[]
+  alternative_funds   alternative_funds[]
+  fund_accounts       fund_accounts[]
+  positions           positions[]
+  trades              trades[]
+
+  @@index([cusip], map: "index_funds_on_cusip")
+}
+
+model goals {
+  id                      Int             @id @default(autoincrement())
+  user_id                 Int?
+  label                   String?         @db.VarChar(255)
+  description             String?         @db.VarChar(255)
+  timeframe               Float?          @db.Float
+  notimeframe             Boolean?
+  initial                 Decimal?        @db.Decimal(17, 2)
+  ongoing                 Decimal?        @db.Decimal(17, 2)
+  unpredictable           Boolean?
+  risk_offset             Int?
+  risk_recommendation     Int?
+  created_at              DateTime?       @db.DateTime(0)
+  updated_at              DateTime?       @db.DateTime(0)
+  advisor_risk_offset     Int?
+  target_amount           Decimal?        @db.Decimal(17, 2)
+  raw_risk_recommendation Float?          @db.Float
+  account_goals           account_goals[]
+
+  @@index([user_id], map: "index_goals_on_user_id")
+}
+
+model group_members {
+  id         Int      @id @default(autoincrement())
+  group_id   Int?
+  user_id    Int?
+  role       String?  @db.VarChar(255)
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+
+  @@unique([user_id, group_id, role], map: "index_group_members_on_user_id_and_group_id_and_role")
+  @@index([group_id], map: "index_group_members_on_group_id")
+  @@index([user_id], map: "index_group_members_on_user_id")
+}
+
+model group_savings_plans {
+  id         Int        @id @default(autoincrement())
+  invite_url String?    @unique(map: "index_group_savings_plans_on_invite_url") @db.VarChar(255)
+  company_id Int
+  group_id   Int        @unique(map: "index_group_savings_plans_on_group_id")
+  created_at DateTime   @db.DateTime(0)
+  updated_at DateTime   @db.DateTime(0)
+  accounts   accounts[]
+  companies  companies  @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_d28e68f5b2")
+  groups     groups     @relation(fields: [group_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_dfdc64feea")
+
+  @@index([company_id], map: "index_group_savings_plans_on_company_id")
+}
+
+model groups {
+  id                                Int                                 @id @default(autoincrement())
+  parent_id                         Int?
+  name                              String?                             @db.VarChar(255)
+  path                              String?                             @db.VarChar(255)
+  url_id                            String?                             @unique(map: "index_groups_on_url_id") @db.VarChar(255)
+  group_type                        String?                             @db.VarChar(255)
+  created_at                        DateTime                            @db.DateTime(0)
+  updated_at                        DateTime                            @db.DateTime(0)
+  ima_template                      String?                             @db.VarChar(255)
+  fee_schedule_id                   Int?
+  prevent_prefill                   Boolean?
+  preferred_institution_name        String?                             @db.VarChar(255)
+  prevent_prefill_portfolio_option  Boolean?
+  days_until_client_info_stale      Int?                                @default(30)
+  account_approval_steps            account_approval_steps[]
+  assets_under_management_histories assets_under_management_histories[]
+  client_advisor_assignment_flows   client_advisor_assignment_flows[]
+  external_advisor_services         external_advisor_services[]
+  group_savings_plans               group_savings_plans?
+  fee_schedules                     fee_schedules?                      @relation(fields: [fee_schedule_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_d81b249d13")
+  groups                            groups?                             @relation("groupsTogroups", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "groups_parent_id_foreign_key")
+  other_groups                      groups[]                            @relation("groupsTogroups")
+
+  @@index([fee_schedule_id], map: "fk_rails_d81b249d13")
+  @@index([parent_id], map: "groups_parent_id_foreign_key")
+}
+
+model household_invitations {
+  id              Int        @id @default(autoincrement())
+  invitee_email   String     @db.VarChar(255)
+  relationship_id Int
+  status_id       Int
+  person_id       Int
+  household_id    Int
+  created_at      DateTime   @db.DateTime(0)
+  updated_at      DateTime   @db.DateTime(0)
+  people          people     @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_335a938e21")
+  households      households @relation(fields: [household_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_dcc0aec101")
+
+  @@index([household_id], map: "index_household_invitations_on_household_id")
+  @@index([invitee_email], map: "index_household_invitations_on_invitee_email")
+  @@index([person_id], map: "index_household_invitations_on_person_id")
+}
+
+model household_memberships {
+  id           Int         @id @default(autoincrement())
+  household_id Int?
+  person_id    Int?        @unique(map: "index_household_memberships_on_person_id")
+  role_id      Int
+  status_id    Int
+  created_at   DateTime    @db.DateTime(0)
+  updated_at   DateTime    @db.DateTime(0)
+  people       people?     @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_83f9a515c3")
+  households   households? @relation(fields: [household_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_f11dbb5a09")
+
+  @@index([household_id], map: "index_household_memberships_on_household_id")
+}
+
+model households {
+  id                    Int                     @id @default(autoincrement())
+  name                  String?                 @db.VarChar(255)
+  created_at            DateTime                @db.DateTime(0)
+  updated_at            DateTime                @db.DateTime(0)
+  household_invitations household_invitations[]
+  household_memberships household_memberships[]
+}
+
+model insider_roles {
+  id                 Int      @id @default(autoincrement())
+  person_id          Int
+  company            String?  @db.VarChar(255)
+  ticker             String?  @db.VarChar(255)
+  type_id            Int?
+  created_at         DateTime @db.DateTime(0)
+  updated_at         DateTime @db.DateTime(0)
+  ownership_level_id Int?
+  market_id          Int?
+  people             people   @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_26aa9d1806")
+
+  @@index([person_id], map: "index_insider_roles_on_person_id")
+}
+
+model investment_management_agreements {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  url         String?   @db.VarChar(255)
+  adc_key     String?   @db.VarChar(255)
+  aws_key     String?   @db.VarChar(255)
+  signed_at   DateTime? @db.DateTime(0)
+  approved_at DateTime? @db.DateTime(0)
+  created_at  DateTime  @db.DateTime(0)
+  updated_at  DateTime  @db.DateTime(0)
+  users       users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_e1a55d8ef3")
+
+  @@index([user_id], map: "index_investment_management_agreements_on_user_id")
+}
+
+model investment_policy_statements {
+  id         Int      @id @default(autoincrement())
+  account_id Int
+  url        String?  @db.VarChar(255)
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+  accounts   accounts @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_7b9abee8c2")
+
+  @@index([account_id], map: "index_investment_policy_statements_on_account_id")
+}
+
+model invitation_links {
+  id                           Int      @id @default(autoincrement())
+  client_advisor_assignment_id Int?
+  advisor_service_level_id     Int?
+  group_url_id                 String?  @db.VarChar(255)
+  link                         String?  @db.VarChar(255)
+  created_at                   DateTime @db.DateTime(0)
+  updated_at                   DateTime @db.DateTime(0)
+
+  @@index([link], map: "index_invitation_links_on_link")
+}
+
+model issue_comments {
+  id            Int      @id @default(autoincrement())
+  issue_id      Int?
+  created_by_id Int?
+  body          String?  @db.Text
+  created_at    DateTime @db.DateTime(0)
+  updated_at    DateTime @db.DateTime(0)
+  users         users?   @relation(fields: [created_by_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_132c66f500")
+  issues        issues?  @relation(fields: [issue_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_265539db40")
+
+  @@index([created_by_id], map: "index_issue_comments_on_created_by_id")
+  @@index([issue_id], map: "index_issue_comments_on_issue_id")
+}
+
+model issues {
+  id                                 Int              @id @default(autoincrement())
+  description                        String?          @db.VarChar(255)
+  priority                           Int?
+  related_to_id                      Int?
+  related_to_type                    String?          @db.VarChar(255)
+  created_by_id                      Int?
+  assigned_to_id                     Int?
+  closed_at                          DateTime?        @db.DateTime(0)
+  created_at                         DateTime         @db.DateTime(0)
+  updated_at                         DateTime         @db.DateTime(0)
+  type_id                            Int              @default(5)
+  issue_comments                     issue_comments[]
+  users_issues_created_by_idTousers  users?           @relation("issues_created_by_idTousers", fields: [created_by_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_181d01bbf3")
+  users_issues_assigned_to_idTousers users?           @relation("issues_assigned_to_idTousers", fields: [assigned_to_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_a1f8aadbc6")
+
+  @@index([assigned_to_id], map: "index_issues_on_assigned_to_id")
+  @@index([created_by_id], map: "index_issues_on_created_by_id")
+  @@index([related_to_type, related_to_id], map: "index_issues_on_related_to_type_and_related_to_id")
+}
+
+model jobs {
+  id            Int       @id @default(autoincrement())
+  active_job_id String?   @db.VarChar(255)
+  class_name    String?   @db.VarChar(255)
+  queue_name    String?   @db.VarChar(255)
+  arguments     String?   @db.VarChar(8192)
+  started_at    DateTime? @db.DateTime(0)
+  finished_at   DateTime? @db.DateTime(0)
+  error         String?   @db.VarChar(255)
+  status_id     Int?
+  created_at    DateTime  @db.DateTime(0)
+  updated_at    DateTime  @db.DateTime(0)
+}
+
+model joint_applicants {
+  id         Int      @id @default(autoincrement())
+  email      String   @db.VarChar(255)
+  account_id Int
+  person_id  Int?
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+  accounts   accounts @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_09a49197a3")
+  people     people?  @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_9da4815718")
+
+  @@index([account_id], map: "index_joint_applicants_on_account_id")
+  @@index([person_id], map: "index_joint_applicants_on_person_id")
+}
+
+model know_your_clients {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  url        String?  @db.VarChar(255)
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_cad706c2ec")
+
+  @@index([user_id], map: "index_know_your_clients_on_user_id")
+}
+
+model kyc_updates {
+  id                  Int       @id @default(autoincrement())
+  user_id             Int
+  due_date            DateTime? @db.Date
+  deadline            DateTime? @db.Date
+  completed           Boolean?
+  confirmed_steps_txt String?   @db.Text
+  created_at          DateTime  @db.DateTime(0)
+  updated_at          DateTime  @db.DateTime(0)
+  completed_at        DateTime? @db.DateTime(0)
+  users               users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_f198ad1591")
+
+  @@index([user_id], map: "index_kyc_updates_on_user_id")
+}
+
+model leads {
+  id           Int      @id @default(autoincrement())
+  email        String   @db.VarChar(255)
+  phone_number String   @db.VarChar(255)
+  created_at   DateTime @db.DateTime(0)
+  updated_at   DateTime @db.DateTime(0)
+  first_name   String   @db.VarChar(255)
+  last_name    String   @db.VarChar(255)
+}
+
+model legal_infos {
+  id                          Int      @id @default(autoincrement())
+  is_pep_or_hio               Boolean?
+  person_id                   Int      @unique(map: "index_legal_infos_on_person_id")
+  created_at                  DateTime @db.DateTime(0)
+  updated_at                  DateTime @db.DateTime(0)
+  dealer_position             String?  @db.VarChar(255)
+  foreign_country             String?  @db.VarChar(255)
+  funds_source                String?  @db.VarChar(255)
+  family_member_is_pep_or_hio Boolean?
+  state_relationship          String?  @db.VarChar(255)
+  dealer_company              String?  @db.VarChar(255)
+  advisor_interest_detail     String?  @db.VarChar(255)
+  people                      people   @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_59ec4d0b0c")
+}
+
+model legal_residencies {
+  id         BigInt   @id @default(autoincrement())
+  person_id  Int?
+  residence  String?  @db.VarChar(255)
+  created_at DateTime @db.DateTime(6)
+  updated_at DateTime @db.DateTime(6)
+  people     people?  @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_aa39074dcc")
+
+  @@index([person_id], map: "index_legal_residencies_on_person_id")
+}
+
+model manual_identity_checks {
+  id                                                 Int      @id @default(autoincrement())
+  person_id                                          Int
+  inspector_id                                       Int
+  completed_at                                       DateTime @db.DateTime(0)
+  identity_verified                                  Boolean
+  notes                                              String   @db.Text
+  created_at                                         DateTime @db.DateTime(0)
+  updated_at                                         DateTime @db.DateTime(0)
+  people_manual_identity_checks_person_idTopeople    people   @relation("manual_identity_checks_person_idTopeople", fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_892b039bb5")
+  people_manual_identity_checks_inspector_idTopeople people   @relation("manual_identity_checks_inspector_idTopeople", fields: [inspector_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_c46e250b01")
+
+  @@index([inspector_id], map: "index_manual_identity_checks_on_inspector_id")
+  @@index([person_id], map: "index_manual_identity_checks_on_person_id")
+}
+
+model model_portfolios {
+  id                         Int                          @id @default(autoincrement())
+  label                      String?                      @db.VarChar(255)
+  description                String?                      @db.VarChar(255)
+  taxable                    Boolean?
+  risk                       Int?
+  created_at                 DateTime?                    @db.DateTime(0)
+  updated_at                 DateTime?                    @db.DateTime(0)
+  responsible                Boolean
+  portfolio_option_id        Int                          @default(0)
+  account_goals              account_goals[]
+  portfolio_tactical_targets portfolio_tactical_targets[]
+  trial_model_accounts       trial_model_accounts[]
+}
+
+model notes {
+  id         Int       @id @default(autoincrement())
+  text       String?   @db.Text
+  person_id  Int?
+  account_id Int?
+  created_at DateTime  @db.DateTime(0)
+  updated_at DateTime  @db.DateTime(0)
+  people     people?   @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_27aea6a7e9")
+  accounts   accounts? @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_ed57cedfc1")
+
+  @@index([account_id], map: "index_notes_on_account_id")
+  @@index([person_id], map: "index_notes_on_person_id")
+}
+
+model notifications {
+  id              Int       @id @default(autoincrement())
+  description     String?   @db.VarChar(255)
+  related_to_id   Int?
+  related_to_type String?   @db.VarChar(255)
+  seen_at         DateTime? @db.DateTime(0)
+  user_id         Int
+  created_at      DateTime  @db.DateTime(0)
+  updated_at      DateTime  @db.DateTime(0)
+  users           users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_b080fb4855")
+
+  @@index([related_to_type, related_to_id], map: "index_notifications_on_related_to_type_and_related_to_id")
+  @@index([user_id], map: "index_notifications_on_user_id")
+}
+
+model one_time_passwords {
+  id                                         Int       @id @default(autoincrement())
+  user_id                                    Int?
+  expires_at                                 DateTime? @db.DateTime(0)
+  one_time_username                          String?   @db.VarChar(255)
+  one_time_password                          String?   @db.VarChar(255)
+  created_at                                 DateTime  @db.DateTime(0)
+  updated_at                                 DateTime  @db.DateTime(0)
+  sent_by_id                                 Int?
+  notes                                      String?   @db.Text
+  users_one_time_passwords_sent_by_idTousers users?    @relation("one_time_passwords_sent_by_idTousers", fields: [sent_by_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_95b3fb06d4")
+  users_one_time_passwords_user_idTousers    users?    @relation("one_time_passwords_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_afd10ae0cb")
+
+  @@index([sent_by_id], map: "index_one_time_passwords_on_sent_by_id")
+  @@index([user_id], map: "index_one_time_passwords_on_user_id")
+}
+
+model orders {
+  id                      Int                      @id @default(autoincrement())
+  trades_approved_at      DateTime?                @db.DateTime(0)
+  trades_received_at      DateTime?                @db.DateTime(0)
+  trades_confirmed_at     DateTime?                @db.DateTime(0)
+  allotments_approved_at  DateTime?                @db.DateTime(0)
+  allotments_received_at  DateTime?                @db.DateTime(0)
+  allotments_confirmed_at DateTime?                @db.DateTime(0)
+  created_at              DateTime                 @db.DateTime(0)
+  updated_at              DateTime                 @db.DateTime(0)
+  rebalancing_finished_at DateTime?                @db.DateTime(0)
+  canceled                Boolean?                 @default(false)
+  paused                  Boolean?                 @default(false)
+  trades                  trades[]
+  trading_engine_results  trading_engine_results[]
+}
+
+model participants {
+  id         Int       @id @default(autoincrement())
+  person_id  Int
+  account_id Int
+  type_id    Int?
+  created_at DateTime? @db.DateTime(0)
+  updated_at DateTime? @db.DateTime(0)
+  people     people    @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_673abba6bd")
+  accounts   accounts  @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_fc5ec3430a")
+
+  @@unique([person_id, account_id, type_id], map: "index_participants_on_person_id_and_account_id_and_type_id")
+  @@index([account_id], map: "index_participants_on_account_id")
+  @@index([person_id], map: "index_participants_on_person_id")
+}
+
+model people {
+  id                                                                                                             Int                                             @id @default(autoincrement())
+  first_name                                                                                                     String?                                         @db.VarChar(255)
+  middle_name                                                                                                    String?                                         @db.VarChar(255)
+  last_name                                                                                                      String?                                         @db.VarChar(255)
+  birth_date                                                                                                     DateTime?                                       @db.Date
+  residence                                                                                                      String?                                         @db.VarChar(255)
+  citizenship                                                                                                    String?                                         @db.VarChar(255)
+  place_of_birth                                                                                                 String?                                         @db.VarChar(255)
+  sin                                                                                                            String?                                         @db.VarChar(255)
+  ssn                                                                                                            String?                                         @db.VarChar(255)
+  us_tax_resident                                                                                                Boolean?
+  employer                                                                                                       String?                                         @db.VarChar(255)
+  occupation                                                                                                     String?                                         @db.VarChar(255)
+  gender_id                                                                                                      Int?
+  employment_status_id                                                                                           Int?
+  marital_status_id                                                                                              Int?
+  user_id                                                                                                        Int?
+  created_at                                                                                                     DateTime                                        @db.DateTime(0)
+  updated_at                                                                                                     DateTime                                        @db.DateTime(0)
+  preferred_title                                                                                                String?                                         @db.VarChar(255)
+  has_foreign_tax_status                                                                                         Boolean?
+  num_dependents                                                                                                 Int?                                            @default(0)
+  employer_type                                                                                                  String?                                         @db.VarChar(255)
+  pro                                                                                                            Boolean?                                        @default(false)
+  total_annual_income                                                                                            Int?
+  own_external_assets                                                                                            Boolean?
+  registered_equities                                                                                            Int?
+  registered_income                                                                                              Int?
+  registered_cash                                                                                                Int?
+  non_registered_income                                                                                          Int?
+  non_registered_equities                                                                                        Int?
+  non_registered_cash                                                                                            Int?
+  trusted_contact_designated                                                                                     Boolean?
+  account_transfers                                                                                              account_transfers[]
+  advisor_assignments                                                                                            advisor_assignments[]
+  advisor_beneficiary_forms_advisor_beneficiary_forms_primary_caregiver_idTopeople                               advisor_beneficiary_forms[]                     @relation("advisor_beneficiary_forms_primary_caregiver_idTopeople")
+  advisor_beneficiary_forms_advisor_beneficiary_forms_legal_guardian_idTopeople                                  advisor_beneficiary_forms[]                     @relation("advisor_beneficiary_forms_legal_guardian_idTopeople")
+  advisor_create_new_account_flows_advisor_create_new_account_flows_advisor_idTopeople                           advisor_create_new_account_flows[]              @relation("advisor_create_new_account_flows_advisor_idTopeople")
+  advisor_create_new_account_flows_advisor_create_new_account_flows_client_idTopeople                            advisor_create_new_account_flows[]              @relation("advisor_create_new_account_flows_client_idTopeople")
+  advisor_create_new_client_flows_advisor_create_new_client_flows_advisor_idTopeople                             advisor_create_new_client_flows[]               @relation("advisor_create_new_client_flows_advisor_idTopeople")
+  advisor_create_new_client_flows_advisor_create_new_client_flows_client_idTopeople                              advisor_create_new_client_flows[]               @relation("advisor_create_new_client_flows_client_idTopeople")
+  advisor_create_new_transfer_flows_advisor_create_new_transfer_flows_client_idTopeople                          advisor_create_new_transfer_flows[]             @relation("advisor_create_new_transfer_flows_client_idTopeople")
+  advisor_create_new_transfer_flows_advisor_create_new_transfer_flows_advisor_idTopeople                         advisor_create_new_transfer_flows[]             @relation("advisor_create_new_transfer_flows_advisor_idTopeople")
+  advisor_create_new_transfer_instruction_flows_advisor_create_new_transfer_instruction_flows_client_idTopeople  advisor_create_new_transfer_instruction_flows[] @relation("advisor_create_new_transfer_instruction_flows_client_idTopeople")
+  advisor_create_new_transfer_instruction_flows_advisor_create_new_transfer_instruction_flows_advisor_idTopeople advisor_create_new_transfer_instruction_flows[] @relation("advisor_create_new_transfer_instruction_flows_advisor_idTopeople")
+  advisor_notification_subscriptions                                                                             advisor_notification_subscriptions[]
+  beneficiaries_beneficiaries_primary_caregiver_idTopeople                                                       beneficiaries[]                                 @relation("beneficiaries_primary_caregiver_idTopeople")
+  beneficiaries_beneficiaries_legal_guardian_idTopeople                                                          beneficiaries[]                                 @relation("beneficiaries_legal_guardian_idTopeople")
+  client_advisor_assignments                                                                                     client_advisor_assignments[]
+  client_read_models                                                                                             client_read_models?
+  completed_risk_appetite_quizzes                                                                                completed_risk_appetite_quizzes[]
+  external_identity_checks                                                                                       external_identity_checks[]
+  fee_credit_accounts                                                                                            fee_credit_accounts[]
+  household_invitations                                                                                          household_invitations[]
+  household_memberships                                                                                          household_memberships?
+  insider_roles                                                                                                  insider_roles[]
+  joint_applicants                                                                                               joint_applicants[]
+  legal_infos                                                                                                    legal_infos?
+  legal_residencies                                                                                              legal_residencies[]
+  manual_identity_checks_manual_identity_checks_person_idTopeople                                                manual_identity_checks[]                        @relation("manual_identity_checks_person_idTopeople")
+  manual_identity_checks_manual_identity_checks_inspector_idTopeople                                             manual_identity_checks[]                        @relation("manual_identity_checks_inspector_idTopeople")
+  notes                                                                                                          notes[]
+  participants                                                                                                   participants[]
+  users                                                                                                          users?                                          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_b39dcee1e8")
+  personal_relations_personal_relations_person_idTopeople                                                        personal_relations[]                            @relation("personal_relations_person_idTopeople")
+  personal_relations_personal_relations_relative_idTopeople                                                      personal_relations[]                            @relation("personal_relations_relative_idTopeople")
+  preferred_custodians                                                                                           preferred_custodians?
+  tax_statuses                                                                                                   tax_statuses[]
+  trial_risk_appetites                                                                                           trial_risk_appetites[]
+  trusted_contacts_trusted_contacts_contact_idTopeople                                                           trusted_contacts[]                              @relation("trusted_contacts_contact_idTopeople")
+  trusted_contacts_trusted_contacts_client_idTopeople                                                            trusted_contacts[]                              @relation("trusted_contacts_client_idTopeople")
+
+  @@index([user_id], map: "index_people_on_user_id")
+  @@index([first_name, middle_name, last_name], map: "people_name_fulltext_index")
+}
+
+model performance_summaries {
+  id               BigInt   @id @default(autoincrement())
+  account_id       Int
+  ytdRoi           Decimal? @db.Decimal(17, 8)
+  sinceInception   Decimal? @db.Decimal(17, 8)
+  annualizedRoi    Decimal? @db.Decimal(17, 8)
+  firstQuarter     Decimal? @db.Decimal(17, 8)
+  secondQuarter    Decimal? @db.Decimal(17, 8)
+  thirdQuarter     Decimal? @db.Decimal(17, 8)
+  fourthQuarter    Decimal? @db.Decimal(17, 8)
+  previous3Months  Decimal? @db.Decimal(17, 8)
+  previous6Months  Decimal? @db.Decimal(17, 8)
+  previous9Months  Decimal? @db.Decimal(17, 8)
+  previous12Months Decimal? @db.Decimal(17, 8)
+  previous3Years   Decimal? @db.Decimal(17, 8)
+  previous5Years   Decimal? @db.Decimal(17, 8)
+  previous10Years  Decimal? @db.Decimal(17, 8)
+  annualized3Year  Decimal? @db.Decimal(17, 8)
+  annualized5Year  Decimal? @db.Decimal(17, 8)
+  annualized10Year Decimal? @db.Decimal(17, 8)
+  created_at       DateTime @db.DateTime(6)
+  updated_at       DateTime @db.DateTime(6)
+  accounts         accounts @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_44b97c7988")
+
+  @@index([account_id], map: "index_performance_summaries_on_account_id")
+}
+
+model personal_relations {
+  id                                            Int                         @id @default(autoincrement())
+  person_id                                     Int
+  relative_id                                   Int
+  type_id                                       Int?
+  created_at                                    DateTime                    @db.DateTime(0)
+  updated_at                                    DateTime                    @db.DateTime(0)
+  other_relation_name                           String?                     @db.VarChar(255)
+  advisor_beneficiary_forms                     advisor_beneficiary_forms[]
+  beneficiaries                                 beneficiaries[]
+  people_personal_relations_person_idTopeople   people                      @relation("personal_relations_person_idTopeople", fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_4dd760e207")
+  people_personal_relations_relative_idTopeople people                      @relation("personal_relations_relative_idTopeople", fields: [relative_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_9adecfc357")
+  successor_holders                             successor_holders[]
+
+  @@index([person_id], map: "index_personal_relations_on_person_id")
+  @@index([relative_id], map: "index_personal_relations_on_relative_id")
+}
+
+model phone_numbers {
+  id                  Int             @id @default(autoincrement())
+  same_as_id          Int?
+  contact_id          Int?
+  contact_type        String?         @db.VarChar(255)
+  country_code        String?         @db.VarChar(255)
+  area_code           String?         @db.VarChar(255)
+  exchange_code       String?         @db.VarChar(255)
+  station_code        String?         @db.VarChar(255)
+  extension           String?         @db.VarChar(255)
+  type_id             Int?
+  created_at          DateTime        @db.DateTime(0)
+  updated_at          DateTime        @db.DateTime(0)
+  phone_numbers       phone_numbers?  @relation("phone_numbersTophone_numbers", fields: [same_as_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_0d1ef54944")
+  other_phone_numbers phone_numbers[] @relation("phone_numbersTophone_numbers")
+
+  @@index([same_as_id], map: "fk_rails_0d1ef54944")
+  @@index([contact_type, contact_id], map: "index_phone_numbers_on_contact_type_and_contact_id")
+}
+
+model platforms {
+  id         BigInt   @id @default(autoincrement())
+  name       String   @unique(map: "index_platforms_on_name") @db.VarChar(255)
+  created_at DateTime @db.DateTime(6)
+  updated_at DateTime @db.DateTime(6)
+}
+
+model portfolio_tactical_allocation_targets {
+  id                           Int                        @id @default(autoincrement())
+  portfolio_tactical_target_id Int
+  allocation_id                Int
+  tactical_weight              Float                      @db.Float
+  created_at                   DateTime?                  @db.DateTime(0)
+  updated_at                   DateTime?                  @db.DateTime(0)
+  allocations                  allocations                @relation(fields: [allocation_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_1fd79887c9")
+  portfolio_tactical_targets   portfolio_tactical_targets @relation(fields: [portfolio_tactical_target_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_268f8f8ed1")
+
+  @@index([portfolio_tactical_target_id], map: "ind_portfolio_tactical_allocation_targets_fk")
+  @@index([allocation_id], map: "index_portfolio_tactical_allocation_targets_on_allocation_id")
+}
+
+model portfolio_tactical_targets {
+  id                                    Int                                     @id @default(autoincrement())
+  model_portfolio_id                    Int
+  start_date                            DateTime                                @db.Date
+  created_at                            DateTime?                               @db.DateTime(0)
+  updated_at                            DateTime?                               @db.DateTime(0)
+  portfolio_tactical_allocation_targets portfolio_tactical_allocation_targets[]
+  model_portfolios                      model_portfolios                        @relation(fields: [model_portfolio_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_e7babea7a9")
+
+  @@index([model_portfolio_id], map: "index_portfolio_tactical_targets_on_model_portfolio_id")
+}
+
+model positions {
+  id           Int          @id @default(autoincrement())
+  fund_id      Int
+  account_id   Int
+  shares       Decimal?     @db.Decimal(17, 6)
+  created_at   DateTime     @db.DateTime(0)
+  updated_at   DateTime     @db.DateTime(0)
+  market_value Decimal?     @db.Decimal(17, 2)
+  allotments   allotments[]
+  accounts     accounts     @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_4ccd9a0798")
+  funds        funds        @relation(fields: [fund_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_b22d16aff5")
+
+  @@index([account_id], map: "index_positions_on_account_id")
+  @@index([fund_id], map: "index_positions_on_fund_id")
+}
+
+model preferred_custodians {
+  id           Int        @id @default(autoincrement())
+  person_id    Int        @unique(map: "index_preferred_custodians_on_person_id")
+  custodian_id Int
+  people       people     @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_14890218bd")
+  custodians   custodians @relation(fields: [custodian_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_eb6da000b6")
+
+  @@index([custodian_id], map: "index_preferred_custodians_on_custodian_id")
+}
+
+model profiles {
+  id              Int         @id @default(autoincrement())
+  title           String?     @db.VarChar(255)
+  full_name       String?     @db.VarChar(255)
+  phone_number    String?     @db.VarChar(255)
+  email_address   String?     @db.VarChar(255)
+  portrait_url    String?     @db.VarChar(255)
+  user_id         Int?
+  created_at      DateTime    @db.DateTime(0)
+  updated_at      DateTime    @db.DateTime(0)
+  promotional_fee Float?      @db.Float
+  promotion_id    Int?
+  hubspot_url     String?     @db.VarChar(255)
+  promotions      promotions? @relation(fields: [promotion_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_c67ac8f59c")
+  users           users?      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_e424190865")
+
+  @@index([promotion_id], map: "fk_rails_c67ac8f59c")
+  @@index([user_id], map: "index_profiles_on_user_id")
+}
+
+model promotion_details {
+  id                Int         @id @default(autoincrement())
+  type              String?     @db.VarChar(255)
+  amount            Decimal?    @db.Decimal(10, 2)
+  discounted_amount Decimal?    @db.Decimal(10, 2)
+  duration          Int?
+  funding_minimum   Decimal?    @db.Decimal(10, 2)
+  redemption_delay  Int?
+  promotion_id      Int?
+  created_at        DateTime    @db.DateTime(0)
+  updated_at        DateTime    @db.DateTime(0)
+  promotions        promotions? @relation(fields: [promotion_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_eeddcd5111")
+
+  @@index([promotion_id], map: "index_promotion_details_on_promotion_id")
+}
+
+model promotion_redemptions {
+  id             Int        @id @default(autoincrement())
+  user_id        Int
+  promotion_id   Int
+  created_at     DateTime   @db.DateTime(0)
+  updated_at     DateTime   @db.DateTime(0)
+  effective_date DateTime?  @db.Date
+  users          users      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_02d656b69c")
+  promotions     promotions @relation(fields: [promotion_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_169022a634")
+
+  @@unique([promotion_id, user_id], map: "index_promotion_redemptions_on_promotion_id_and_user_id")
+  @@index([promotion_id], map: "index_promotion_redemptions_on_promotion_id")
+  @@index([user_id], map: "index_promotion_redemptions_on_user_id")
+}
+
+model promotions {
+  id                    Int                     @id @default(autoincrement())
+  code                  String?                 @unique(map: "index_promotions_on_code") @db.VarChar(255)
+  valid_from            DateTime?               @db.DateTime(0)
+  valid_until           DateTime?               @db.DateTime(0)
+  description           String?                 @db.VarChar(255)
+  redeem_limit          Int?
+  created_at            DateTime                @db.DateTime(0)
+  updated_at            DateTime                @db.DateTime(0)
+  affiliate_id          BigInt?
+  profiles              profiles[]
+  promotion_details     promotion_details[]
+  promotion_redemptions promotion_redemptions[]
+  affiliates            affiliates?             @relation(fields: [affiliate_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_53c0626868")
+
+  @@index([affiliate_id], map: "index_promotions_on_affiliate_id")
+}
+
+model questions {
+  id           Int            @id @default(autoincrement())
+  label        String?        @db.VarChar(255)
+  description  String?        @db.VarChar(255)
+  accessor     String?        @db.VarChar(255)
+  input        Int?
+  min          Float?         @db.Float
+  max          Float?         @db.Float
+  step         Float?         @db.Float
+  prefix       String?        @db.VarChar(255)
+  suffix       String?        @db.VarChar(255)
+  placeholder  String?        @db.VarChar(255)
+  created_at   DateTime?      @db.DateTime(0)
+  updated_at   DateTime?      @db.DateTime(0)
+  dependencies dependencies[]
+}
+
+model quotes {
+  id         Int       @id @default(autoincrement())
+  close      Float?    @db.Float
+  adjusted   Float?    @db.Float
+  date       DateTime? @db.Date
+  fund_id    Int?
+  created_at DateTime? @db.DateTime(0)
+  updated_at DateTime? @db.DateTime(0)
+
+  @@unique([date, fund_id], map: "index_quotes_on_date_and_fund_id")
+  @@index([fund_id], map: "index_quotes_on_fund_id")
+}
+
+model raise_cash_requests {
+  id           Int         @id @default(autoincrement())
+  account_id   Int?
+  custodian_id Int?
+  amount       Decimal?    @db.Decimal(17, 2)
+  due_date     DateTime?   @db.Date
+  status_id    Int?
+  reason       String?     @db.VarChar(255)
+  source_type  String?     @db.VarChar(255)
+  source_id    Int?
+  created_at   DateTime?   @db.DateTime(0)
+  updated_at   DateTime?   @db.DateTime(0)
+  accounts     accounts?   @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_5a4a47fce6")
+  custodians   custodians? @relation(fields: [custodian_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_8aaf0053ee")
+  transfers    transfers[]
+
+  @@index([account_id], map: "fk_rails_5a4a47fce6")
+  @@index([custodian_id], map: "fk_rails_8aaf0053ee")
+  @@index([source_type, source_id], map: "index_raise_cash_requests_on_source")
+}
+
+model referral_payments {
+  id                                             Int       @id @default(autoincrement())
+  referral_id                                    Int
+  user_id                                        Int?
+  type                                           String?   @db.VarChar(255)
+  amount                                         Decimal?  @db.Decimal(17, 2)
+  status                                         String?   @db.VarChar(255)
+  paid_at                                        DateTime? @db.DateTime(0)
+  paid_by_user_id                                Int?
+  unlocked_at                                    DateTime? @db.DateTime(0)
+  created_at                                     DateTime  @db.DateTime(0)
+  updated_at                                     DateTime  @db.DateTime(0)
+  referrals                                      referrals @relation(fields: [referral_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_24faaaf1be")
+  users_referral_payments_paid_by_user_idTousers users?    @relation("referral_payments_paid_by_user_idTousers", fields: [paid_by_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_c07c3a2f65")
+  users_referral_payments_user_idTousers         users?    @relation("referral_payments_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_e556238d04")
+
+  @@unique([referral_id, user_id, type], map: "index_referral_payments_on_referral_id_and_user_id_and_type")
+  @@index([paid_by_user_id], map: "index_referral_payments_on_paid_by_user_id")
+  @@index([referral_id], map: "index_referral_payments_on_referral_id")
+  @@index([user_id], map: "index_referral_payments_on_user_id")
+}
+
+model referrals {
+  id                                 Int                 @id @default(autoincrement())
+  bonus_id                           Int?
+  referee_email                      String?             @db.VarChar(255)
+  status                             String?             @db.VarChar(255)
+  last_sent_at                       DateTime?           @db.DateTime(0)
+  referrer_id                        Int
+  referee_id                         Int?
+  created_at                         DateTime            @db.DateTime(0)
+  updated_at                         DateTime            @db.DateTime(0)
+  referral_payments                  referral_payments[]
+  users_referrals_referrer_idTousers users               @relation("referrals_referrer_idTousers", fields: [referrer_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_2eb0614166")
+  users_referrals_referee_idTousers  users?              @relation("referrals_referee_idTousers", fields: [referee_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_3b55e485b8")
+
+  @@unique([referrer_id, referee_id], map: "index_referrals_on_referrer_id_and_referee_id")
+  @@index([referee_id], map: "index_referrals_on_referee_id")
+  @@index([referrer_id], map: "index_referrals_on_referrer_id")
+}
+
+model reminder_notifications {
+  id                          Int                           @id @default(autoincrement())
+  type                        String?                       @db.VarChar(255)
+  sending_period_in_days      Int?
+  created_at                  DateTime                      @db.DateTime(0)
+  updated_at                  DateTime                      @db.DateTime(0)
+  sent_reminder_notifications sent_reminder_notifications[]
+
+  @@unique([type, sending_period_in_days], map: "index_reminder_notifications_on_type_and_sending_period_in_days")
+}
+
+model rep_code_assignments {
+  id          BigInt     @id @default(autoincrement())
+  rep_code_id BigInt?
+  advisor_id  Int?
+  created_at  DateTime   @db.DateTime(6)
+  updated_at  DateTime   @db.DateTime(6)
+  users       users?     @relation(fields: [advisor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_4305ee108c")
+  rep_codes   rep_codes? @relation(fields: [rep_code_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_e0ddf46002")
+
+  @@index([advisor_id], map: "index_rep_code_assignments_on_advisor_id")
+  @@index([rep_code_id], map: "index_rep_code_assignments_on_rep_code_id")
+}
+
+model rep_codes {
+  id                                       BigInt                 @id @default(autoincrement())
+  code                                     String?                @db.VarChar(255)
+  name                                     String?                @db.VarChar(255)
+  code_type_id                             Int?
+  status_id                                Int?
+  contact_type_id                          Int?
+  branch_id                                BigInt?
+  branch_manager_id                        Int?
+  tier1_reviewer_id                        Int?
+  branch_manager_name                      String?                @db.VarChar(255)
+  email                                    String?                @db.VarChar(255)
+  description                              String?                @db.VarChar(255)
+  created_at                               DateTime               @db.DateTime(6)
+  updated_at                               DateTime               @db.DateTime(6)
+  other_business                           String?                @db.Text
+  other_business_type                      String?                @db.Text
+  share_office                             String?                @db.Text
+  termination_date                         String?                @db.VarChar(255)
+  advisor_assignments                      advisor_assignments[]
+  rep_code_assignments                     rep_code_assignments[]
+  branches                                 branches?              @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_2124404dd8")
+  users_rep_codes_branch_manager_idTousers users?                 @relation("rep_codes_branch_manager_idTousers", fields: [branch_manager_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_436acad198")
+  users_rep_codes_tier1_reviewer_idTousers users?                 @relation("rep_codes_tier1_reviewer_idTousers", fields: [tier1_reviewer_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_447a6552ea")
+
+  @@index([branch_id], map: "index_rep_codes_on_branch_id")
+  @@index([branch_manager_id], map: "index_rep_codes_on_branch_manager_id")
+  @@index([code], map: "index_rep_codes_on_code")
+  @@index([code_type_id], map: "index_rep_codes_on_code_type_id")
+  @@index([contact_type_id], map: "index_rep_codes_on_contact_type_id")
+  @@index([tier1_reviewer_id], map: "index_rep_codes_on_tier1_reviewer_id")
+}
+
+model rif_details {
+  id                                               Int            @id @default(autoincrement())
+  age_to_use_id                                    Int?
+  payment_frequency_id                             Int?
+  payment_day_of_month                             Int?
+  start_month                                      Int?
+  start_year                                       Int?
+  payment_amount_type_id                           Int?
+  withdrawal_amount                                Decimal?       @db.Decimal(17, 2)
+  withdrawal_amount_valid_until                    DateTime?      @db.Date
+  payment_amount                                   Decimal?       @db.Decimal(17, 2)
+  payment_amount_tax_id                            Int?
+  tax_withholding_type_id                          Int?
+  tax_withholding_percent                          Int?
+  tax_withholding_amount                           Decimal?       @db.Decimal(17, 2)
+  account_id                                       Int?
+  pay_to_bank_account_id                           Int?
+  pay_to_account_id                                Int?
+  created_at                                       DateTime       @db.DateTime(0)
+  updated_at                                       DateTime       @db.DateTime(0)
+  bank_accounts                                    bank_accounts? @relation(fields: [pay_to_bank_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_11836e7a32")
+  accounts_rif_details_pay_to_account_idToaccounts accounts?      @relation("rif_details_pay_to_account_idToaccounts", fields: [pay_to_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_13bf25b004")
+  accounts_rif_details_account_idToaccounts        accounts?      @relation("rif_details_account_idToaccounts", fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_1f561cc352")
+
+  @@index([account_id], map: "index_rif_details_on_account_id")
+  @@index([pay_to_account_id], map: "index_rif_details_on_pay_to_account_id")
+  @@index([pay_to_bank_account_id], map: "index_rif_details_on_pay_to_bank_account_id")
+}
+
+model risk_appetite_calculations {
+  id                              Int                             @id @default(autoincrement())
+  risk_appetite_type_id           Int
+  calculated_at                   DateTime                        @db.DateTime(0)
+  completed_risk_appetite_quiz_id Int
+  created_at                      DateTime                        @db.DateTime(0)
+  updated_at                      DateTime                        @db.DateTime(0)
+  completed_risk_appetite_quizzes completed_risk_appetite_quizzes @relation(fields: [completed_risk_appetite_quiz_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_447d4e3776")
+
+  @@index([completed_risk_appetite_quiz_id], map: "index_risk_calculations_on_completed_risk_quiz_id")
+}
+
+model risk_appetite_quiz_choices {
+  id                                  Int                                   @id @default(autoincrement())
+  sort_order                          Int
+  label                               String                                @db.VarChar(255)
+  value                               Int
+  risk_appetite_quiz_question_id      Int
+  created_at                          DateTime                              @db.DateTime(0)
+  updated_at                          DateTime                              @db.DateTime(0)
+  risk_appetite_quiz_questions        risk_appetite_quiz_questions          @relation(fields: [risk_appetite_quiz_question_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_44768a6ef4")
+  selected_risk_appetite_quiz_choices selected_risk_appetite_quiz_choices[]
+
+  @@unique([risk_appetite_quiz_question_id, sort_order], map: "index_risk_quiz_choices_on_risk_quiz_question_and_sort_order")
+  @@index([risk_appetite_quiz_question_id], map: "index_risk_quiz_choices_on_risk_quiz_question_id")
+}
+
+model risk_appetite_quiz_questions {
+  id                                  Int                                   @id @default(autoincrement())
+  sort_order                          Int
+  label                               String                                @db.VarChar(255)
+  risk_appetite_quiz_id               Int
+  created_at                          DateTime                              @db.DateTime(0)
+  updated_at                          DateTime                              @db.DateTime(0)
+  risk_appetite_quiz_choices          risk_appetite_quiz_choices[]
+  risk_appetite_quizzes               risk_appetite_quizzes                 @relation(fields: [risk_appetite_quiz_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_8506382183")
+  selected_risk_appetite_quiz_choices selected_risk_appetite_quiz_choices[]
+
+  @@unique([risk_appetite_quiz_id, sort_order], map: "index_risk_quiz_questions_on_risk_quiz_and_sort_order")
+  @@index([risk_appetite_quiz_id], map: "index_risk_appetite_quiz_questions_on_risk_appetite_quiz_id")
+}
+
+model risk_appetite_quizzes {
+  id                              Int                               @id @default(autoincrement())
+  activated_at                    DateTime                          @db.DateTime(0)
+  deactivated_at                  DateTime?                         @db.DateTime(0)
+  created_at                      DateTime                          @db.DateTime(0)
+  updated_at                      DateTime                          @db.DateTime(0)
+  completed_risk_appetite_quizzes completed_risk_appetite_quizzes[]
+  risk_appetite_quiz_questions    risk_appetite_quiz_questions[]
+}
+
+model schema_migrations {
+  version String @id @db.VarChar(255)
+}
+
+model selected_risk_appetite_quiz_choices {
+  id                              Int                             @id @default(autoincrement())
+  completed_risk_appetite_quiz_id Int
+  risk_appetite_quiz_question_id  Int
+  risk_appetite_quiz_choice_id    Int
+  created_at                      DateTime                        @db.DateTime(0)
+  updated_at                      DateTime                        @db.DateTime(0)
+  risk_appetite_quiz_questions    risk_appetite_quiz_questions    @relation(fields: [risk_appetite_quiz_question_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_33e4b75a28")
+  risk_appetite_quiz_choices      risk_appetite_quiz_choices      @relation(fields: [risk_appetite_quiz_choice_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_4948ab9688")
+  completed_risk_appetite_quizzes completed_risk_appetite_quizzes @relation(fields: [completed_risk_appetite_quiz_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_8305aacfd2")
+
+  @@unique([completed_risk_appetite_quiz_id, risk_appetite_quiz_question_id], map: "index_one_selected_choice_per_question_and_complete_risk_quiz")
+  @@index([completed_risk_appetite_quiz_id], map: "index_selected_risk_quiz_choices_on_completed_risk_quiz_id")
+  @@index([risk_appetite_quiz_choice_id], map: "index_selected_risk_quiz_choices_on_risk_quiz_choice_id")
+  @@index([risk_appetite_quiz_question_id], map: "index_selected_risk_quiz_choices_on_risk_quiz_question_id")
+}
+
+model sent_reminder_notifications {
+  id                       Int                    @id @default(autoincrement())
+  related_to_id            Int
+  related_to_type          String                 @db.VarChar(255)
+  reminder_notification_id Int
+  created_at               DateTime               @db.DateTime(0)
+  updated_at               DateTime               @db.DateTime(0)
+  reminder_notifications   reminder_notifications @relation(fields: [reminder_notification_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_95a959b8d9")
+
+  @@unique([reminder_notification_id, related_to_id, related_to_type], map: "index_on_reminder_notification_and_related_to")
+  @@index([related_to_type, related_to_id], map: "index_sent_reminder_notifications_on_related_to")
+  @@index([reminder_notification_id], map: "index_sent_reminder_notifications_on_reminder_notification_id")
+}
+
+model source_investment_infos {
+  id                BigInt    @id @default(autoincrement())
+  institution_name  String?   @db.VarChar(255)
+  estimated_amount  Int?
+  source_investment String?   @db.VarChar(255)
+  borrowed_funds    Boolean?
+  account_id        Int?
+  created_at        DateTime  @db.DateTime(6)
+  updated_at        DateTime  @db.DateTime(6)
+  accounts          accounts? @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_d7a111f1c0")
+
+  @@index([account_id], map: "index_source_investment_infos_on_account_id")
+}
+
+model successor_holders {
+  id                   Int                @id @default(autoincrement())
+  personal_relation_id Int
+  account_id           Int                @unique(map: "index_successor_holders_on_account_id")
+  created_at           DateTime           @db.DateTime(0)
+  updated_at           DateTime           @db.DateTime(0)
+  accounts             accounts           @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_0d6ccd1579")
+  personal_relations   personal_relations @relation(fields: [personal_relation_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_18e0c5ed5e")
+
+  @@index([personal_relation_id], map: "index_successor_holders_on_personal_relation_id")
+}
+
+model tax_statuses {
+  id                        Int      @id @default(autoincrement())
+  person_id                 Int
+  jurisdiction              String?  @db.VarChar(255)
+  tax_identification_number String?  @db.VarChar(255)
+  reason_id                 Int?
+  reason_text               String?  @db.VarChar(255)
+  created_at                DateTime @db.DateTime(0)
+  updated_at                DateTime @db.DateTime(0)
+  people                    people   @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_7aa23e6e4a")
+
+  @@index([person_id], map: "index_tax_statuses_on_person_id")
+}
+
+model trade_reconciliation_mismatches {
+  id                             Int                          @id @default(autoincrement())
+  trade_reconciliation_report_id Int
+  external_id                    String?                      @db.VarChar(255)
+  account_number                 String                       @db.VarChar(255)
+  currency                       String                       @db.VarChar(255)
+  side                           String                       @db.VarChar(255)
+  symbol                         String                       @db.VarChar(255)
+  market                         String                       @db.VarChar(255)
+  quantity                       Decimal                      @db.Decimal(17, 4)
+  price                          Decimal                      @db.Decimal(17, 8)
+  created_at                     DateTime?                    @db.DateTime(0)
+  updated_at                     DateTime?                    @db.DateTime(0)
+  allocation_external_id         String?                      @db.VarChar(255)
+  trade_reconciliation_reports   trade_reconciliation_reports @relation(fields: [trade_reconciliation_report_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_402d525f61")
+
+  @@unique([trade_reconciliation_report_id, external_id], map: "index_trade_recon_mismatches_t_r_report_id_ext_id")
+  @@index([trade_reconciliation_report_id], map: "index_trade_recon_mismatches_on_trade_recon_report_id")
+  @@index([external_id], map: "index_trade_reconciliation_mismatches_on_external_id")
+}
+
+model trade_reconciliation_reports {
+  id                              Int                               @id @default(autoincrement())
+  trade_date                      DateTime                          @db.Date
+  custodian_id                    Int
+  allocations_file_name           String?                           @db.VarChar(255)
+  no_allocations_file             Boolean                           @default(false)
+  created_at                      DateTime?                         @db.DateTime(0)
+  updated_at                      DateTime?                         @db.DateTime(0)
+  trade_reconciliation_mismatches trade_reconciliation_mismatches[]
+  custodians                      custodians                        @relation(fields: [custodian_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_32f7dd62cb")
+
+  @@index([custodian_id], map: "fk_rails_32f7dd62cb")
+}
+
+model trades {
+  id          Int          @id @default(autoincrement())
+  filled      Int?
+  limit_price Float?       @db.Float
+  fund_id     Int
+  order_id    Int
+  created_at  DateTime     @db.DateTime(0)
+  updated_at  DateTime     @db.DateTime(0)
+  type_id     Int?         @default(0)
+  allotments  allotments[]
+  orders      orders       @relation(fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_7d14776990")
+  funds       funds        @relation(fields: [fund_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_ec99ec61a4")
+
+  @@index([fund_id], map: "index_trades_on_fund_id")
+  @@index([order_id], map: "index_trades_on_order_id")
+}
+
+model trading_engine_results {
+  id          Int       @id @default(autoincrement())
+  order_id    Int?
+  account_id  Int?
+  user_id     Int?
+  number      String?   @db.VarChar(255)
+  client      String?   @db.VarChar(255)
+  balance     Decimal?  @db.Decimal(10, 0)
+  withdrawals Decimal?  @db.Decimal(10, 0)
+  reason      String?   @db.VarChar(255)
+  duration    Decimal?  @db.Decimal(10, 0)
+  results     String?   @db.Text
+  status      String?   @db.VarChar(255)
+  finished    Boolean?
+  created_at  DateTime  @db.DateTime(0)
+  updated_at  DateTime  @db.DateTime(0)
+  orders      orders?   @relation(fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_1bb789d3ac")
+  accounts    accounts? @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_71a3c1b582")
+
+  @@index([account_id], map: "index_trading_engine_results_on_account_id")
+  @@index([order_id], map: "index_trading_engine_results_on_order_id")
+}
+
+model transactions {
+  id                           Int       @id @default(autoincrement())
+  account_number               String?   @db.VarChar(255)
+  transaction_code             String?   @db.VarChar(255)
+  description                  String?   @db.VarChar(255)
+  cusip                        String?   @db.VarChar(255)
+  trade_date                   DateTime? @db.Date
+  process_date                 DateTime? @db.Date
+  quantity                     Decimal?  @db.Decimal(17, 4)
+  amount                       Decimal?  @db.Decimal(17, 4)
+  file_date                    DateTime? @db.Date
+  unit_price                   Decimal?  @db.Decimal(17, 5)
+  external_id                  String?   @unique(map: "transactions_external_id_idx") @db.VarChar(255)
+  original_classification_name String    @db.VarChar(255)
+  classification_name          String    @db.VarChar(255)
+  activity_type_id             Int?
+  cancelled                    Boolean   @default(false)
+  custodian_id                 Int
+  created_at                   DateTime  @db.DateTime(0)
+  updated_at                   DateTime  @db.DateTime(0)
+  settle_date                  DateTime? @db.Date
+  raw_amount                   Decimal?  @db.Decimal(17, 4)
+  sub_classification           String?   @db.VarChar(255)
+  needs_manual_processing      Boolean   @default(false)
+  allotment_id                 Int?
+
+  @@index([account_number], map: "index_transactions_on_account_number")
+  @@index([allotment_id], map: "index_transactions_on_allotment_id")
+  @@index([cusip], map: "index_transactions_on_cusip")
+}
+
+model transfer_instructions {
+  id                         Int                 @id @default(autoincrement())
+  type_id                    Int?
+  frequency_id               Int?
+  continue_until             DateTime?           @db.Date
+  max_occurrence             Int?
+  manual_cancel              Boolean?
+  amount                     Decimal?            @db.Decimal(17, 2)
+  transfer_from_id           Int
+  transfer_from_type         String              @db.VarChar(255)
+  transfer_to_id             Int
+  transfer_to_type           String              @db.VarChar(255)
+  sent_at                    DateTime?           @db.DateTime(0)
+  start_date                 DateTime?           @db.Date
+  cancelled                  Boolean?            @default(false)
+  created_at                 DateTime            @db.DateTime(0)
+  updated_at                 DateTime            @db.DateTime(0)
+  cancellation_sent_at       DateTime?           @db.DateTime(0)
+  status_id                  Int
+  cancelled_at               DateTime?           @db.DateTime(0)
+  sub_status_id              Int?
+  pending_for_available_cash Boolean?            @default(false)
+  transfer_requests          transfer_requests[]
+
+  @@index([transfer_from_type, transfer_from_id], map: "index_transfer_instructions_on_transfer_from")
+  @@index([transfer_to_type, transfer_to_id], map: "index_transfer_instructions_on_transfer_to")
+}
+
+model transfer_requests {
+  id                      Int                    @id @default(autoincrement())
+  type_id                 Int?
+  recurring               Boolean?
+  amount                  Decimal?               @db.Decimal(17, 2)
+  account_id              Int?
+  bank_account_id         Int?
+  created_at              DateTime               @db.DateTime(0)
+  updated_at              DateTime               @db.DateTime(0)
+  sent_at                 DateTime?              @db.Date
+  transfer_from_id        Int?
+  transfer_from_type      String?                @db.VarChar(255)
+  transfer_to_id          Int?
+  transfer_to_type        String?                @db.VarChar(255)
+  date_to_be_processed    DateTime?              @db.Date
+  transfer_instruction_id Int?
+  status_id               Int
+  forced_fail             Boolean                @default(false)
+  forced_complete         Boolean                @default(false)
+  custodian_id            Int?
+  accounts                accounts?              @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_27a41b258c")
+  transfer_instructions   transfer_instructions? @relation(fields: [transfer_instruction_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_7b3d9868e0")
+  bank_accounts           bank_accounts?         @relation(fields: [bank_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_f4f5bea454")
+  transfers               transfers[]
+
+  @@index([account_id], map: "index_transfer_requests_on_account_id")
+  @@index([bank_account_id], map: "index_transfer_requests_on_bank_account_id")
+  @@index([transfer_from_type, transfer_from_id], map: "index_transfer_requests_on_transfer_from")
+  @@index([transfer_instruction_id], map: "index_transfer_requests_on_transfer_instruction_id")
+  @@index([transfer_to_type, transfer_to_id], map: "index_transfer_requests_on_transfer_to")
+}
+
+model transfers {
+  id                      Int                  @id @default(autoincrement())
+  account_id              Int?
+  date                    DateTime?            @db.Date
+  amount                  Decimal?             @db.Decimal(17, 2)
+  created_at              DateTime             @db.DateTime(0)
+  updated_at              DateTime             @db.DateTime(0)
+  transfer_request_id     Int?
+  raise_cash_request_id   Int?
+  external_transaction_id String?              @db.VarChar(255)
+  raise_cash_requests     raise_cash_requests? @relation(fields: [raise_cash_request_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_c050efdaca")
+  accounts                accounts?            @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_e33bbc3d7d")
+  transfer_requests       transfer_requests?   @relation(fields: [transfer_request_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_ea47d8d108")
+
+  @@index([raise_cash_request_id], map: "fk_rails_c050efdaca")
+  @@index([account_id], map: "index_transfers_on_account_id")
+  @@index([transfer_request_id], map: "index_transfers_on_transfer_request_id")
+}
+
+model trial_model_accounts {
+  id                       Int                        @id @default(autoincrement())
+  model_portfolio_id       Int
+  account_number           String                     @db.VarChar(255)
+  created_at               DateTime                   @db.DateTime(0)
+  updated_at               DateTime                   @db.DateTime(0)
+  model_portfolios         model_portfolios           @relation(fields: [model_portfolio_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_5c050324c6")
+  trial_simulation_details trial_simulation_details[]
+
+  @@index([model_portfolio_id], map: "index_trial_model_accounts_on_model_portfolio_id")
+}
+
+model trial_risk_appetites {
+  id                    Int      @id @default(autoincrement())
+  risk_appetite_type_id Int
+  person_id             Int
+  created_at            DateTime @db.DateTime(0)
+  updated_at            DateTime @db.DateTime(0)
+  people                people   @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_f08ef00cf0")
+
+  @@index([person_id], map: "index_trial_risk_appetites_on_person_id")
+}
+
+model trial_simulation_details {
+  id                        Int                   @id @default(autoincrement())
+  account_id                Int
+  model_account_id          Int?
+  ratio                     Decimal?              @db.Decimal(17, 8)
+  model_account_assigned_at DateTime?             @db.DateTime(0)
+  created_at                DateTime              @db.DateTime(0)
+  updated_at                DateTime              @db.DateTime(0)
+  trial_model_accounts      trial_model_accounts? @relation(fields: [model_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_5b376f666b")
+  accounts                  accounts              @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_91042d28dd")
+
+  @@index([account_id], map: "index_trial_simulation_details_on_account_id")
+  @@index([model_account_id], map: "index_trial_simulation_details_on_model_account_id")
+}
+
+model trusted_contacts {
+  id                                         BigInt   @id @default(autoincrement())
+  designated                                 Boolean
+  client_id                                  Int?
+  contact_id                                 Int?
+  relationship                               String?  @db.VarChar(255)
+  email                                      String?  @db.VarChar(255)
+  created_at                                 DateTime @db.DateTime(6)
+  updated_at                                 DateTime @db.DateTime(6)
+  people_trusted_contacts_contact_idTopeople people?  @relation("trusted_contacts_contact_idTopeople", fields: [contact_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_b3d0a26068")
+  people_trusted_contacts_client_idTopeople  people?  @relation("trusted_contacts_client_idTopeople", fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_d7c88948be")
+
+  @@index([client_id], map: "index_trusted_contacts_on_client_id")
+  @@index([contact_id], map: "index_trusted_contacts_on_contact_id")
+}
+
+model update_records {
+  id                        Int      @id @default(autoincrement())
+  root_entity_id            Int?
+  root_entity_type          String?  @db.VarChar(255)
+  document_type             String?  @db.VarChar(255)
+  id_path                   String?  @db.VarChar(255)
+  payload                   String?  @db.Text
+  version                   Int      @default(0)
+  created_at                DateTime @db.DateTime(0)
+  updated_at                DateTime @db.DateTime(0)
+  description               String?  @db.VarChar(255)
+  result_of                 String?  @db.VarChar(255)
+  previous_update_record_id Int?
+  next_update_record_id     Int?
+
+  @@unique([root_entity_id, root_entity_type, id_path, version], map: "update_records_version_uniqueness")
+  @@index([next_update_record_id], map: "index_update_records_on_next_update_record_id")
+  @@index([previous_update_record_id], map: "index_update_records_on_previous_update_record_id")
+  @@index([root_entity_type, root_entity_id], map: "index_update_records_on_root_entity_type_and_root_entity_id")
+}
+
+model users {
+  id                                                         Int                                @id @default(autoincrement())
+  email                                                      String                             @unique(map: "index_users_on_email") @default("") @db.VarChar(255)
+  encrypted_password                                         String                             @default("") @db.VarChar(255)
+  reset_password_token                                       String?                            @unique(map: "index_users_on_reset_password_token") @db.VarChar(255)
+  reset_password_sent_at                                     DateTime?                          @db.DateTime(0)
+  remember_created_at                                        DateTime?                          @db.DateTime(0)
+  sign_in_count                                              Int                                @default(0)
+  current_sign_in_at                                         DateTime?                          @db.DateTime(0)
+  last_sign_in_at                                            DateTime?                          @db.DateTime(0)
+  current_sign_in_ip                                         String?                            @db.VarChar(255)
+  last_sign_in_ip                                            String?                            @db.VarChar(255)
+  confirmation_token                                         String?                            @unique(map: "index_users_on_confirmation_token") @db.VarChar(255)
+  confirmed_at                                               DateTime?                          @db.DateTime(0)
+  confirmation_sent_at                                       DateTime?                          @db.DateTime(0)
+  unconfirmed_email                                          String?                            @db.VarChar(255)
+  failed_attempts                                            Int                                @default(0)
+  unlock_token                                               String?                            @unique(map: "index_users_on_unlock_token") @db.VarChar(255)
+  locked_at                                                  DateTime?                          @db.DateTime(0)
+  income                                                     Int?
+  financial_assets                                           Int?
+  non_financial_assets                                       Int?
+  total_liabilities                                          Int?
+  risk_appetite                                              Int?
+  appetite0                                                  Int?
+  appetite1                                                  Int?
+  appetite2                                                  Int?
+  appetite3                                                  Int?
+  appetite4                                                  Int?
+  appetite5                                                  Int?
+  appetite6                                                  Int?
+  appetite7                                                  Int?
+  list_email                                                 Boolean?
+  is_client                                                  Boolean?
+  is_super                                                   Boolean?
+  id_verified                                                Boolean?
+  id_checked_at                                              DateTime?                          @db.DateTime(0)
+  id_check_count                                             Int?
+  id_check_result                                            String?                            @db.Text
+  is_politically_exposed_foreign_person                      Boolean?
+  acknowledge_aadd                                           Boolean?
+  acknowledge_soag                                           Boolean?
+  acknowledge_cipfb                                          Boolean?
+  acknowledge_iirocb                                         Boolean?
+  acknowledge_rdi                                            Boolean?
+  preferred_language_id                                      Int?
+  public_company_insiders                                    Boolean?
+  public_company_owners                                      Boolean?
+  securities_industry_insiders                               Boolean?
+  has_brokerage_accounts                                     Boolean?
+  power_of_attorney                                          Boolean?
+  power_of_attorney_first                                    String?                            @db.VarChar(255)
+  power_of_attorney_last                                     String?                            @db.VarChar(255)
+  created_at                                                 DateTime?                          @db.DateTime(0)
+  updated_at                                                 DateTime?                          @db.DateTime(0)
+  trial_account                                              Boolean?
+  referral_code                                              String?                            @unique(map: "index_users_on_referral_code") @db.VarChar(255)
+  encrypted_otp_secret                                       String?                            @db.VarChar(255)
+  encrypted_otp_secret_iv                                    String?                            @db.VarChar(255)
+  encrypted_otp_secret_salt                                  String?                            @db.VarChar(255)
+  consumed_timestep                                          Int?
+  otp_required_for_login                                     Boolean?
+  deactivated_at                                             DateTime?                          @db.DateTime(0)
+  liquid_assets                                              Int?
+  liquid_liabilities                                         Int?
+  fixed_assets                                               Int?
+  fixed_liabilities                                          Int?
+  external_client_id                                         String?                            @db.VarChar(255)
+  account_approvals                                          account_approvals[]
+  accounts                                                   accounts[]
+  activities                                                 activities[]
+  application_read_models                                    application_read_models[]
+  bank_accounts                                              bank_accounts[]
+  beneficiaries                                              beneficiaries[]
+  brokerage_accounts                                         brokerage_accounts[]
+  client_advisor_assignment_flows                            client_advisor_assignment_flows[]
+  documents                                                  documents[]
+  fee_credit_transactions                                    fee_credit_transactions[]
+  fee_schedule_assignments                                   fee_schedule_assignments[]
+  investment_management_agreements                           investment_management_agreements[]
+  issue_comments                                             issue_comments[]
+  issues_issues_created_by_idTousers                         issues[]                           @relation("issues_created_by_idTousers")
+  issues_issues_assigned_to_idTousers                        issues[]                           @relation("issues_assigned_to_idTousers")
+  know_your_clients                                          know_your_clients[]
+  kyc_updates                                                kyc_updates[]
+  notifications                                              notifications[]
+  one_time_passwords_one_time_passwords_sent_by_idTousers    one_time_passwords[]               @relation("one_time_passwords_sent_by_idTousers")
+  one_time_passwords_one_time_passwords_user_idTousers       one_time_passwords[]               @relation("one_time_passwords_user_idTousers")
+  people                                                     people[]
+  profiles                                                   profiles[]
+  promotion_redemptions                                      promotion_redemptions[]
+  referral_payments_referral_payments_paid_by_user_idTousers referral_payments[]                @relation("referral_payments_paid_by_user_idTousers")
+  referral_payments_referral_payments_user_idTousers         referral_payments[]                @relation("referral_payments_user_idTousers")
+  referrals_referrals_referrer_idTousers                     referrals[]                        @relation("referrals_referrer_idTousers")
+  referrals_referrals_referee_idTousers                      referrals[]                        @relation("referrals_referee_idTousers")
+  rep_code_assignments                                       rep_code_assignments[]
+  rep_codes_rep_codes_branch_manager_idTousers               rep_codes[]                        @relation("rep_codes_branch_manager_idTousers")
+  rep_codes_rep_codes_tier1_reviewer_idTousers               rep_codes[]                        @relation("rep_codes_tier1_reviewer_idTousers")
+}
+
+model workflow_actions {
+  id              Int       @id @default(autoincrement())
+  action          String?   @db.VarChar(255)
+  payload         String?   @db.Text
+  timestamp       DateTime  @db.DateTime(0)
+  related_to_id   Int
+  related_to_type String    @db.VarChar(255)
+  created_at      DateTime? @db.DateTime(0)
+  updated_at      DateTime? @db.DateTime(0)
+
+  @@index([related_to_type, related_to_id], map: "index_workflow_actions_on_related_to_type_and_related_to_id")
 }
